@@ -133,6 +133,14 @@ the identity (for example Apple Development to Developer ID) or the install path
 changes the signature and resets TCC, so you must re-grant Microphone and
 Accessibility once after the first signed build.
 
+A stale TCC entry (still shown as on in System Settings but tied to a previous
+signature) makes `CGPreflightListenEventAccess()` return false, so the hotkey
+silently does not fire. The app self-heals this with a "Reset permissions..."
+action (menu bar and Settings > Permissions): it runs `tccutil reset` for its
+own Input Monitoring, Accessibility, and Microphone entries, then re-requests
+them. One reset is enough as long as the signing identity and install path stay
+the same; a new identity or path re-breaks TCC and needs one more reset.
+
 Verify a signed build locally:
 
 ```bash

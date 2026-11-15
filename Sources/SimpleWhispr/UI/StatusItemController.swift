@@ -114,6 +114,16 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         login.state = settings.launchAtLogin ? .on : .off
         menu.addItem(login)
 
+        // Self-heal after a signing change: clear a stale TCC entry and
+        // re-request the permissions. Shown when a permission is missing, which
+        // includes the stale-signature case (the check returns false then too).
+        if !appState.inputMonitoringGranted || !appState.accessibilityGranted || !appState.micGranted {
+            let reset = NSMenuItem(title: "Reset permissions…",
+                                   action: #selector(resetPermissionsAction), keyEquivalent: "")
+            reset.target = self
+            menu.addItem(reset)
+        }
+
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: "Quit SimpleWhispr", action: #selector(quit),
@@ -160,6 +170,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     @objc private func toggleLaunchAtLogin() {
         settings.launchAtLogin.toggle()
+    }
+
+    @objc private func resetPermissionsAction() {
+        appState.resetPermissions()
     }
 
     @objc private func quit() {

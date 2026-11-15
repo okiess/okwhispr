@@ -65,6 +65,19 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Self-heal after a signing change: clear the app's own TCC entries, then
+    /// re-request Input Monitoring + Accessibility so the user can re-grant.
+    /// The permission watcher re-creates the hotkey tap once Input Monitoring
+    /// flips on, so no relaunch is needed.
+    func resetPermissions() {
+        Task {
+            await Permissions.resetAll()
+            requestInputMonitoring()
+            Permissions.requestAccessibility()
+            Permissions.openAccessibilitySettings()
+        }
+    }
+
     /// Polls Input Monitoring every second. When it flips to granted while we
     /// are running, the hotkey tap is re-created: it was created before the
     /// grant and never starts receiving events on its own, so the permission

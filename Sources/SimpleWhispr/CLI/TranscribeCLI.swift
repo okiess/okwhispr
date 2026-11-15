@@ -122,9 +122,13 @@ enum TranscribeCLI {
     /// Hidden self-test that verifies the hold-to-talk hotkey end-to-end without
     /// a physical keypress. It registers the right-Command tap, posts a synthetic
     /// flags-changed down+up for that key through its own session, and reports
-    /// whether the callbacks fired. It requires Accessibility permission — the
-    /// same permission the hotkey and the paste need — so a FAIL with
-    /// "trusted=false" means the user must grant Accessibility in System Settings.
+    /// whether the callbacks fired and whether the current process is granted
+    /// Input Monitoring. It requires both Accessibility and Input Monitoring.
+    ///
+    /// Caveat: the result reflects the launching context. A binary run from a
+    /// terminal inherits that terminal's TCC, so it can PASS even when the
+    /// deployed login-item app is denied - it is a smoke test, not proof the
+    /// installed app works.
     ///
     ///   SimpleWhispr --hotkey-selftest
     @discardableResult
@@ -151,13 +155,20 @@ enum TranscribeCLI {
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
             let trusted = AXIsProcessTrusted()
-            let ok = downFired && upFired
-            let detail = "trusted=\(trusted) downFired=\(downFired) upFired=\(upFired)"
+            let inputMonitoring = CGPreflightListenEventAccess()
+            // PASS only when the tap actually received the keys AND the current
+            // process is granted Input Monitoring, so a terminal launch (which
+            // inherits a different TCC context) does not report a misleading PASS.
+            let ok = downFired && upFired && inputMonitoring
+            let detail = "trusted=\(trusted) inputMonitoring=\(inputMonitoring) downFired=\(downFired) upFired=\(upFired)"
             AppLogger.log("hotkey self-test: \(detail) => \(ok ? "PASS" : "FAIL")")
+            let caveat = "Note: this reflects the launching context (terminal TCC), not the deployed login-item app.\n"
             let line = ok
-                ? "Hotkey self-test PASSED (\(detail)).\n"
+                ? "Hotkey self-test PASSED (\(detail)).\n\(caveat)"
                 : "Hotkey self-test FAILED (\(detail)).\n"
+                  + (inputMonitoring ? "" : "Grant Input Monitoring in System Settings, then retry.\n")
                   + (trusted ? "" : "Grant Accessibility in System Settings, then retry.\n")
+                  + caveat
             FileHandle.standardError.write(Data(line.utf8))
             exit(Int32(ok ? 0 : 1))
         }

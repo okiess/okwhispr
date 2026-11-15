@@ -156,15 +156,34 @@ struct SettingsView: View {
             permissionRow(
                 title: "Input Monitoring",
                 granted: appState.inputMonitoringGranted,
-                help: "Required for the global hotkey. Without it the right-⌘ tap is created but receives no keys and the dictation hotkey does not fire.",
+                help: "Required for the global hotkey. Without it the right-⌘ tap gets no keys and the dictation hotkey does not fire. If it shows on but the tap still does not fire, it may be tied to a previous app signature - use \"Reset & re-request\" below.",
                 action: { appState.requestInputMonitoring() }
             )
+
+            if !allPermissionsGranted {
+                Divider()
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Still not working?").font(.headline)
+                        Text("After a signing change the permissions can become stale. Reset clears them so you can re-grant to the current build.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Button("Reset & re-request") { appState.resetPermissions() }
+                }
+            }
         }
         .formStyle(.grouped)
         .padding()
         .onAppear { appState.refreshPermissions() }
         .onChange(of: appState.accessibilityGranted) { _, _ in appState.refreshPermissions() }
         .onChange(of: appState.inputMonitoringGranted) { _, _ in appState.refreshPermissions() }
+    }
+
+    private var allPermissionsGranted: Bool {
+        appState.micGranted && appState.accessibilityGranted && appState.inputMonitoringGranted
     }
 
     @ViewBuilder

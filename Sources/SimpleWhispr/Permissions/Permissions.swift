@@ -82,4 +82,35 @@ enum Permissions {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
     }
+
+    // MARK: - Reset (self-heal after a signing change)
+
+    /// Clears the app's own TCC entries so a stale entry from a previous
+    /// signature does not block a re-grant. Runs `tccutil reset <service>` for
+    /// Input Monitoring, Accessibility, and Microphone, off the main thread.
+    /// Never throws; failures are logged.
+    static func resetAll() async {
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.oliverkiessler.simplewhispr"
+        for service in ["ListenEvent", "Accessibility", "Microphone"] {
+            await runTccUtilReset(service: service, bundleID: bundleID)
+        }
+    }
+
+    private static func runTccUtilReset(service: String, bundleID: String) async {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            DispatchQueue.global().async {
+                let proc = Process()
+                proc.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+                proc.arguments = ["reset", service, bundleID]
+                do {
+                    try proc.run()
+                    proc.waitUntilExit()
+                    AppLogger.log("tccutil reset \(service) for \(bundleID) -> exit \(proc.terminationStatus)")
+                } catch {
+                    AppLogger.error("tccutil reset \(service) for \(bundleID) failed: \(error)")
+                }
+                cont.resume()
+            }
+        }
+    }
 }
