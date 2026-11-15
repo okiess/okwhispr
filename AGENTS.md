@@ -40,8 +40,11 @@ Notes:
 - `build.sh` bundles `mlx.metallib` into the `.app` so MLX can load its GPU
   kernels at runtime. If a build warns that the metallib was not found, the
   installed app may fail to load the model.
-- The build is signed ad hoc unless an Apple Development identity is present;
-  signature and install path are tied to TCC permissions, so keep both stable.
+- `build.sh` signs the app with a Developer ID certificate (from
+  `.env.signing`) when one is available, otherwise an Apple Development
+  identity, otherwise ad hoc. A real signature uses the hardened runtime plus
+  `SimpleWhispr.entitlements`. See the signing section below. Signature and
+  install path are tied to TCC permissions, so keep both stable.
 
 ## Test
 
@@ -71,6 +74,60 @@ Logs: `~/Library/Logs/SimpleWhispr.log`.
 After changing UI or layout, confirm visually: build, install, relaunch
 (`./build.sh --open`), and check the menu bar panel and the Settings window in
 both light and dark mode.
+
+## Signing and notarization
+
+`build.sh` resolves a signing identity in priority order and signs the app
+bundle in `~/Applications/SimpleWhispr.app`:
+
+1. `DEVELOPER_ID_APPLICATION` from `.env.signing` (Developer ID, the default).
+2. `SIGN_IDENTITY` environment override.
+3. The auto-detected `Apple Development:` identity.
+4. Ad hoc (`-`) when no certificate is present.
+
+A real signature (anything but ad hoc) is signed with `--options runtime`
+(hardened runtime) plus `SimpleWhispr.entitlements`:
+
+- `com.apple.security.app-sandbox = false` - the app types into the frontmost
+  app via a CGEventTap and pastes with Cmd-V, which needs Accessibility and is
+  incompatible with the sandbox.
+- `com.apple.security.device.audio-input = true` - AVAudioEngine microphone
+  access under the hardened runtime.
+
+There is intentionally no `network.client` or `keychain-access-groups`: the app
+is local-first and keeps that contract.
+
+Credentials live in `.env.signing` (gitignored via `.env*`), following the
+pattern from `freelancetimewise/macos-app`:
+
+```bash
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Name (TEAMID)"
+export APPLE_ID="apple-id@example.com"
+export APPLE_TEAM_ID="TEAMID"
+export APPLE_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+```
+
+Notarization is optional and only runs when `NOTARIZE=1`:
+
+```bash
+NOTARIZE=1 ./build.sh
+```
+
+It requires a Developer ID certificate plus `APPLE_ID`, `APPLE_TEAM_ID`, and
+`APPLE_APP_PASSWORD` from `.env.signing`, then zips the app, submits it with
+`xcrun notarytool ... --wait`, and staples the ticket with `xcrun stapler`.
+
+TCC caveat: Microphone and Accessibility are tied to the signature. Switching
+the identity (for example Apple Development to Developer ID) or the install path
+changes the signature and resets TCC, so you must re-grant Microphone and
+Accessibility once after the first signed build.
+
+Verify a signed build locally:
+
+```bash
+codesign --verify --deep --strict ~/Applications/SimpleWhispr.app
+codesign -dv --verbose=4 ~/Applications/SimpleWhispr.app  # shows the runtime
+```
 
 ## Architecture
 
@@ -111,8 +168,9 @@ new engine and register it in `TranscriberRegistry`.
   hotkey does not fire and the transcript is only copied to the clipboard.
 - Launch-at-login persistence is not guaranteed with an ad-hoc signature,
   because each rebuild changes the signature and can reset TCC permissions. For a
-  stable experience, sign with an Apple Development identity and install to the
-  same path every time.
+  stable experience sign with a stable identity (a Developer ID from
+  `.env.signing`, or an Apple Development identity) and install to the same path
+  every time.
 
 ## Do and do not
 

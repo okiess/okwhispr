@@ -41,6 +41,22 @@ few minutes. The **Metal Toolchain** Xcode component must be installed:
 xcodebuild -downloadComponent MetalToolchain
 ```
 
+## Signing
+
+`./build.sh` signs the app with a Developer ID certificate from `.env.signing`
+(gitignored) when one is present, otherwise an Apple Development identity, and
+only falls back to an ad-hoc signature. A real signature uses the hardened
+runtime plus `SimpleWhispr.entitlements`. To notarize for distribution:
+
+```bash
+NOTARIZE=1 ./build.sh
+```
+
+Credentials (`DEVELOPER_ID_APPLICATION`, `APPLE_ID`, `APPLE_TEAM_ID`,
+`APPLE_APP_PASSWORD`) go in `.env.signing`. Because Microphone and Accessibility
+are tied to the signature, re-grant both once after the first build with a new
+identity. See `AGENTS.md` for the full signing and notarization notes.
+
 ## First run
 
 1. Open SimpleWhispr from Launchpad (or `open ~/Applications/SimpleWhispr.app`).
@@ -132,8 +148,9 @@ build.sh          swift build → .app bundle → codesign → ~/Applications
   means Accessibility is not granted yet.
 - Launch-at-login persistence is not guaranteed with an **ad-hoc signature**
   (each rebuild changes the signature, which can reset TCC permissions). For a
-  stable experience sign with an Apple Development identity (Xcode → Sign In)
-  and always install to the same path.
+  stable experience sign with a stable identity (a Developer ID from
+  `.env.signing`, or an Apple Development identity via Xcode Sign In) and always
+  install to the same path.
 - **Hold-a-modifier consideration:** right ⌘ is also a normal system modifier.
   Holding it *alone* dictates; if your muscle memory uses right ⌘ as part of
   other key combinations you may notice brief interference. This is the

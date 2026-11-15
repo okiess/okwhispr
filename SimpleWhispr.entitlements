@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Not sandboxed: the app types the transcript into whatever app is
+         frontmost via a CGEventTap and pastes with Cmd-V, which requires
+         Accessibility and is therefore incompatible with the app sandbox. -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+    <!-- Hardened runtime: AVAudioEngine needs explicit microphone access. -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+</dict>
+</plist>
