@@ -8,7 +8,18 @@ struct SimpleWhisprApp: App {
 
     var body: some Scene {
         // The menu-bar status item is the main UI (see AppDelegate).
-        // Only a Settings window scene is declared here.
+
+        // A 1x1 hidden window that gives @Environment(\.openSettings) a valid
+        // SwiftUI context. It MUST be declared before the Settings scene, or the
+        // openSettings action is not resolved and opening Settings fails silently
+        // in this menu-bar-only (accessory) app.
+        Window("", id: "SimpleWhispr.SettingsContext") {
+            SettingsContextView()
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 1, height: 1)
+        .defaultPosition(.topLeading)
+
         Settings {
             SettingsView(appState: appDelegate.appState)
         }
