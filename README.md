@@ -41,6 +41,16 @@ few minutes. The **Metal Toolchain** Xcode component must be installed:
 xcodebuild -downloadComponent MetalToolchain
 ```
 
+If a build fails with a stale `metal` compiler path after a toolchain update,
+clear the stale cache and retry (MLX is not re-downloaded):
+
+```bash
+SCRATCH=~/Library/Developer/SimpleWhispr/build
+rm -rf "$SCRATCH/out/Intermediates.noindex/XCBuildData" \
+       "$SCRATCH/out/Intermediates.noindex/mlx-swift.build" \
+       "$SCRATCH/.buildSystem_release" "$SCRATCH/.buildSystem_debug"
+```
+
 ## Signing
 
 `./build.sh` signs the app with a Developer ID certificate from `.env.signing`

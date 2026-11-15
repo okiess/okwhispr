@@ -37,6 +37,17 @@ Notes:
   several minutes.
 - The Metal Toolchain Xcode component must be installed:
   `xcodebuild -downloadComponent MetalToolchain`.
+- If a build then fails on a stale `metal` compiler path (a missing
+  `.../MetalToolchain-*/Metal.xctoolchain/usr/bin/metal`), the SwiftPM / Xcode
+  cache points at an old cryptex mount. Clear it without refetching MLX, then
+  rebuild:
+
+  ```bash
+  SCRATCH=~/Library/Developer/SimpleWhispr/build
+  rm -rf "$SCRATCH/out/Intermediates.noindex/XCBuildData" \
+         "$SCRATCH/out/Intermediates.noindex/mlx-swift.build" \
+         "$SCRATCH/.buildSystem_release" "$SCRATCH/.buildSystem_debug"
+  ```
 - `build.sh` bundles `mlx.metallib` into the `.app` so MLX can load its GPU
   kernels at runtime. If a build warns that the metallib was not found, the
   installed app may fail to load the model.
