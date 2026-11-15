@@ -63,6 +63,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the menu-bar status item and keep it retained.
         statusItemController = StatusItemController(appState: appState)
 
+        // Request permissions FIRST so the system prompt shows and the tap is
+        // created after the grant. A .listenOnly tap created before Input
+        // Monitoring is granted never starts receiving events; the AppState
+        // watcher re-creates the tap when the permission is granted later, so the
+        // hotkey takes effect without a relaunch. Both requests are no-ops when
+        // the permission is already granted.
+        //
+        // Input Monitoring is separate from Accessibility and is required for the
+        // global hotkey; Accessibility is required for the Cmd-V auto-paste.
+        Permissions.requestInputMonitoring()
+        Permissions.requestAccessibility()
+
         // Register the global hold-to-talk hotkey (right Command by default).
         GlobalHotkey.shared.onStart = { [weak self] in
             self?.appState.beginRecording()
@@ -71,16 +83,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.appState.endRecording()
         }
         GlobalHotkey.shared.register(keyCode: UInt32(kVK_RightCommand), modifiers: 0)
-
-        // The event tap needs Input Monitoring (separate from Accessibility).
-        // Request it so the system shows the prompt the first time; if it is
-        // already granted this is a no-op.
-        Permissions.requestInputMonitoring()
-
-        // Request Accessibility too, with the system prompt, so the app appears
-        // in the accessibility list and the user can enable it (needed for the
-        // ⌘V auto-paste). No-op when already trusted.
-        Permissions.requestAccessibility()
 
         AppLogger.log("SimpleWhispr launched. engine=\(SettingsStore.shared.engine.displayName)")
     }

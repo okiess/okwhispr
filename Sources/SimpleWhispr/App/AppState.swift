@@ -29,11 +29,18 @@ final class AppState: ObservableObject {
     private var transcriber: Transcriber?
     private var settings = SettingsStore.shared
 
+    /// Watches Input Monitoring and re-creates the hotkey tap the moment the
+    /// permission is granted, so the hotkey works without a relaunch.
+    private var permissionWatcher: Timer?
+    private var lastInputMonitoring = false
+
     /// Guards against a key-up that arrives before a key-down finished starting.
     private var captureInProgress = false
 
     init() {
         refreshPermissions()
+        lastInputMonitoring = Permissions.inputMonitoringGranted
+        startPermissionWatcher()
         // Preload the chosen engine in the background so the first dictation
         // does not have to wait for a model download or warm-up.
         prepareEngine()
@@ -55,6 +62,28 @@ final class AppState: ObservableObject {
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 refreshPermissions()
             }
+        }
+    }
+
+    /// Polls Input Monitoring every second. When it flips to granted while we
+    /// are running, the hotkey tap is re-created: it was created before the
+    /// grant and never starts receiving events on its own, so the permission
+    /// would otherwise only take effect after a relaunch.
+    private func startPermissionWatcher() {
+        permissionWatcher = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.pollPermissions() }
+        }
+    }
+
+    private func pollPermissions() {
+        let granted = Permissions.inputMonitoringGranted
+        if granted && !lastInputMonitoring {
+            AppLogger.log("Input Monitoring granted; re-creating hotkey tap")
+            GlobalHotkey.shared.reactivate()
+        }
+        lastInputMonitoring = granted
+        if granted != inputMonitoringGranted {
+            inputMonitoringGranted = granted
         }
     }
 

@@ -26,8 +26,17 @@ final class GlobalHotkey {
     private var runLoopSource: CFRunLoopSource?
     private var healthTimer: Timer?
 
+    /// Emits the "Input Monitoring not granted" log once, not every tick.
+    private var warnedMissingPermission = false
+    /// Throttles the re-enable log to at most once per 15s during busy periods.
+    private var lastReenableLog = Date.distantPast
+
     /// The modifier virtual keycode to react to (e.g. 54 = right Command).
     fileprivate var activeKeyCode: UInt32 = 0
+
+    /// How long to wait before logging a repeated tap re-enable, so a busy main
+    /// thread (e.g. during transcription) does not flood the log.
+    private static let reenableLogInterval: TimeInterval = 15
 
     /// Called on the main thread when the key goes down.
     var onStart: (() -> Void)?
@@ -43,6 +52,8 @@ final class GlobalHotkey {
         unregister()
 
         activeKeyCode = keyCode
+        warnedMissingPermission = false
+        lastReenableLog = .distantPast
 
         let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
         // userInfo points at this singleton so the C callback can reach it.
@@ -83,10 +94,23 @@ final class GlobalHotkey {
 
     private func checkTapEnabled() {
         guard let tap = eventTap else { return }
-        if !CGEvent.tapIsEnabled(tap: tap) {
-            AppLogger.log("tap was disabled, re-enabling (health check)")
-            CGEvent.tapEnable(tap: tap, enable: true)
+        // Without Input Monitoring the tap can never receive events, so do not
+        // spin re-enabling it. The AppState watcher re-creates the tap the moment
+        // the permission is granted; just report the cause once.
+        if !Permissions.inputMonitoringGranted {
+            if !warnedMissingPermission {
+                AppLogger.log("hotkey tap disabled: Input Monitoring not granted yet; it will activate when granted")
+                warnedMissingPermission = true
+            }
+            return
         }
+        warnedMissingPermission = false
+        guard !CGEvent.tapIsEnabled(tap: tap) else { return }
+        if lastReenableLog.timeIntervalSinceNow < -Self.reenableLogInterval {
+            AppLogger.log("tap was disabled, re-enabling (health check)")
+            lastReenableLog = Date()
+        }
+        CGEvent.tapEnable(tap: tap, enable: true)
     }
 
     /// Re-enables the tap after the system disabled it (called from the C
@@ -95,6 +119,14 @@ final class GlobalHotkey {
         if let tap = eventTap {
             CGEvent.tapEnable(tap: tap, enable: true)
         }
+    }
+
+    /// Re-creates the tap using the last-registered keycode. Called when Input
+    /// Monitoring is granted while the app is already running, because a tap
+    /// created before the grant never starts receiving events. register() runs
+    /// unregister() first, so this is a clean, idempotent re-creation.
+    func reactivate() {
+        register(keyCode: activeKeyCode)
     }
 
     func unregister() {
