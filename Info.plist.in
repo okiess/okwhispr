@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>com.oliverkiessler.simplewhispr</string>
+<key>CFBundleName</key><string>SimpleWhispr</string>
+<key>CFBundleDisplayName</key><string>SimpleWhispr</string>
+<key>CFBundleExecutable</key><string>SimpleWhispr</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.1</string>
+<key>CFBundleVersion</key><string>__BUILD__</string>
+<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
+<key>LSUIElement</key><true/>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSPrincipalClass</key><string>NSApplication</string>
+<key>NSMicrophoneUsageDescription</key><string>SimpleWhispr needs your microphone to record what you speak so it can turn speech into text and type it at your cursor.</string>
+<key>NSSpeechRecognitionUsageDescription</key><string>SimpleWhispr uses speech recognition to turn what you speak into text.</string>
+<key>NSAccessibilityUsageDescription</key><string>SimpleWhispr needs Accessibility permission so it can type the transcribed text into the text field you are using.</string>
+</dict></plist>

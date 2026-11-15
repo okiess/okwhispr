@@ -1,0 +1,14 @@
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj/
+xcuserdata/
+.DS_Store
+.env*
+/shots/
+/models/
+*.safetensors
+# Generated icon artifacts (build.sh regenerates them from tools/make_icon.swift).
+tools/AppIcon.iconset/
+tools/AppIcon.png
+tools/AppIcon.icns
