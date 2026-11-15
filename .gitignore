@@ -12,3 +12,4 @@ xcuserdata/
 tools/AppIcon.iconset/
 tools/AppIcon.png
 tools/AppIcon.icns
+.build_number
