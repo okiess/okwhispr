@@ -5,6 +5,8 @@ DerivedData/
 xcuserdata/
 .DS_Store
 .env*
+# Ship the credential template so contributors know the format, but keep the real one ignored.
+!.env.signing.example
 /shots/
 /models/
 *.safetensors

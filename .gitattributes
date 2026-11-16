@@ -1,0 +1,12 @@
+# Normalize text files and keep line endings as LF on checkout.
+* text=auto eol=lf
+
+# Binary artifacts: do not diff, mangle, or apply text normalization.
+*.icns binary
+*.png binary
+*.metallib binary
+*.safetensors binary
+*.aiff binary
+
+# Shell scripts keep their shebang as text, not binaries.
+*.sh text

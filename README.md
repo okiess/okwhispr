@@ -167,3 +167,28 @@ build.sh          swift build → .app bundle → codesign → ~/Applications
   tradeoff of a single-key dictation shortcut and is configurable later.
 - No login-item persistence across app updates is guaranteed with an ad-hoc
   signature; grant a stable signature (Xcode → Sign In) for that.
+
+## Contributing
+
+Contributions are welcome. See `CONTRIBUTING.md` for how to build, test, and open
+a pull request, and `SECURITY.md` for reporting security issues.
+
+- `CONTRIBUTING.md` - how to contribute (build, test, PR checklist).
+- `CODE_OF_CONDUCT.md` - the community code of conduct.
+- `SECURITY.md` - how to report security issues privately.
+- `AGENTS.md` - the build, test, and architecture reference.
+
+## License
+
+The source code of SimpleWhispr is released under the **MIT License**
+(see `LICENSE`).
+
+Two things sit outside that license and are distributed under their own terms:
+
+- **The on-device model.** SimpleWhispr does not bundle or redistribute the
+  Cohere Transcribe 2B model. It is downloaded at first use (~1.6 GB for INT5)
+  and is governed by its own license, available on the model's page on
+  Hugging Face. Review that license before relying on the model for production use.
+- **Runtime dependencies.** MLX (via `speech-swift`) and its Swift bindings are
+  licensed under the Apache 2.0 license. See `Package.resolved` for the exact
+  revisions.
