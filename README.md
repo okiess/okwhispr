@@ -1,4 +1,4 @@
-# SimpleWhispr
+# OkWhispr
 
 A tiny, local-first dictation app for macOS. One job: **speak, and the text
 appears at your cursor in any app.**
@@ -29,7 +29,7 @@ dictation.
 ## Build and install
 
 ```bash
-./build.sh            # release build, installs to ~/Applications/SimpleWhispr.app
+./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build
 ./build.sh --open     # install, then relaunch
 ```
@@ -45,7 +45,7 @@ If a build fails with a stale `metal` compiler path after a toolchain update,
 clear the stale cache and retry (MLX is not re-downloaded):
 
 ```bash
-SCRATCH=~/Library/Developer/SimpleWhispr/build
+SCRATCH=~/Library/Developer/OkWhispr/build
 rm -rf "$SCRATCH/out/Intermediates.noindex/XCBuildData" \
        "$SCRATCH/out/Intermediates.noindex/mlx-swift.build" \
        "$SCRATCH/.buildSystem_release" "$SCRATCH/.buildSystem_debug"
@@ -56,7 +56,7 @@ rm -rf "$SCRATCH/out/Intermediates.noindex/XCBuildData" \
 `./build.sh` signs the app with a Developer ID certificate from `.env.signing`
 (gitignored) when one is present, otherwise an Apple Development identity, and
 only falls back to an ad-hoc signature. A real signature uses the hardened
-runtime plus `SimpleWhispr.entitlements`. To notarize for distribution:
+runtime plus `OkWhispr.entitlements`. To notarize for distribution:
 
 ```bash
 NOTARIZE=1 ./build.sh
@@ -69,10 +69,10 @@ identity. See `AGENTS.md` for the full signing and notarization notes.
 
 ## First run
 
-1. Open SimpleWhispr from Launchpad (or `open ~/Applications/SimpleWhispr.app`).
+1. Open OkWhispr from Launchpad (or `open ~/Applications/OkWhispr.app`).
 2. Grant the **Microphone** permission when macOS asks.
 3. Grant **Accessibility** permission (System Settings → Privacy & Security →
-   Accessibility → enable SimpleWhispr). This is required for **two** things: the
+   Accessibility → enable OkWhispr). This is required for **two** things: the
    global right-⌘ hotkey (macOS delivers the modifier press through an event
    tap, which needs Accessibility) and pasting the transcript with ⌘V. The menu
    bar and Settings window guide you through it.
@@ -104,13 +104,13 @@ the build:
 say -v Anna -o /tmp/test_de.aiff "Guten Morgen, das ist ein Test."
 say -v Samantha -o /tmp/test_en.aiff "Good morning, this is a test."
 
-BIN=~/Library/Developer/SimpleWhispr/build/debug/SimpleWhispr
+BIN=~/Library/Developer/OkWhispr/build/debug/OkWhispr
 "$BIN" --transcribe /tmp/test_de.aiff --language de --variant int5
 # → Guten Morgen, das ist ein Test.
 "$BIN" --transcribe /tmp/test_en.aiff --language en
 ```
 
-Logs are written to `~/Library/Logs/SimpleWhispr.log`.
+Logs are written to `~/Library/Logs/OkWhispr.log`.
 
 ## Permissions
 
@@ -125,7 +125,7 @@ ever leaves your machine.
 ## Project layout
 
 ```
-Sources/SimpleWhispr/
+Sources/OkWhispr/
   App/            menu bar scene, app delegate, hotkey wiring, AppState
   Hotkey/         CGEventTap on flags-changed (hold right ⌘, needs Accessibility)
   Recording/      AVAudioEngine mic capture + WAV writer
@@ -152,7 +152,7 @@ build.sh          swift build → .app bundle → codesign → ~/Applications
   (and you can paste it yourself). Grant it in System Settings → Privacy &
   Security → Accessibility.
 - **Verify the hotkey without a keypress:** run
-  `~/Applications/SimpleWhispr.app/Contents/MacOS/SimpleWhispr --hotkey-selftest`.
+  `~/Applications/OkWhispr.app/Contents/MacOS/OkWhispr --hotkey-selftest`.
   It registers the right-⌘ tap, posts a synthetic down/up, and prints
   `PASSED`/`FAILED` with the Accessibility state. A `FAILED` with `trusted=false`
   means Accessibility is not granted yet.
@@ -180,12 +180,12 @@ a pull request, and `SECURITY.md` for reporting security issues.
 
 ## License
 
-The source code of SimpleWhispr is released under the **MIT License**
+The source code of OkWhispr is released under the **MIT License**
 (see `LICENSE`).
 
 Two things sit outside that license and are distributed under their own terms:
 
-- **The on-device model.** SimpleWhispr does not bundle or redistribute the
+- **The on-device model.** OkWhispr does not bundle or redistribute the
   Cohere Transcribe 2B model. It is downloaded at first use (~1.6 GB for INT5)
   and is governed by its own license, available on the model's page on
   Hugging Face. Review that license before relying on the model for production use.

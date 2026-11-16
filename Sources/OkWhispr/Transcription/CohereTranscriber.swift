@@ -13,7 +13,7 @@ final class CohereTranscriber: Transcriber, @unchecked Sendable {
     private let variant: CohereVariant
     private let language: String
     private var model: CohereTranscribeModel?
-    private let queue = DispatchQueue(label: "com.oliverkiessler.simplewhispr.cohere")
+    private let queue = DispatchQueue(label: "com.inceedo.okwhispr.cohere")
 
     /// Progress callback during the first-time model download (0.0 - 1.0).
     var onProgress: ((Double) -> Void)?

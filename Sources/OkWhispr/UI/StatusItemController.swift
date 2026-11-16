@@ -59,7 +59,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         case .transcribing:
             symbol = "waveform"
         }
-        if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: "SimpleWhispr") {
+        if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: "OkWhispr") {
             image.isTemplate = true
             button.image = image
         }
@@ -69,8 +69,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private var tooltip: String {
         switch appState.phase {
         case .idle:
-            return appState.modelReady ? "SimpleWhispr — hold right ⌘ to dictate"
-                : "SimpleWhispr — preparing model…"
+            return appState.modelReady ? "OkWhispr — hold right ⌘ to dictate"
+                : "OkWhispr — preparing model…"
         case .listening:
             return "Listening… release right ⌘ to transcribe"
         case .transcribing:
@@ -126,7 +126,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "Quit SimpleWhispr", action: #selector(quit),
+        let quit = NSMenuItem(title: "Quit OkWhispr", action: #selector(quit),
                               keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)

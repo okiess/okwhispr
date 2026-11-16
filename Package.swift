@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SimpleWhispr",
+    name: "OkWhispr",
     // MLX (the local Cohere Transcribe 2B engine) requires macOS 15+.
     platforms: [.macOS(.v15)],
     dependencies: [
@@ -11,7 +11,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "SimpleWhispr",
+            name: "OkWhispr",
             dependencies: [
                 .product(name: "CohereTranscribeASR", package: "speech-swift"),
             ],

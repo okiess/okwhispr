@@ -1,6 +1,6 @@
-# Contributing to SimpleWhispr
+# Contributing to OkWhispr
 
-Thanks for wanting to help. SimpleWhispr is intentionally small, so the bar for a
+Thanks for wanting to help. OkWhispr is intentionally small, so the bar for a
 good contribution is low. This guide covers how to build, test, and open a pull
 request. The full build and architecture reference lives in `AGENTS.md` and
 `README.md`; read those first.
@@ -14,7 +14,7 @@ request. The full build and architecture reference lives in `AGENTS.md` and
 - No emojis and no em-dashes in code, comments, or docs.
 - The Swift target runs in **Swift 5 language mode** on purpose (see
   `Package.swift`). Do not flip it to Swift 6 mode.
-- Do not move or rename the install path (`~/Applications/SimpleWhispr.app`); it
+- Do not move or rename the install path (`~/Applications/OkWhispr.app`); it
   is tied to TCC permissions.
 
 ## Prerequisites
@@ -28,7 +28,7 @@ request. The full build and architecture reference lives in `AGENTS.md` and
 ## Build
 
 ```bash
-./build.sh            # release build, installs to ~/Applications/SimpleWhispr.app
+./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build
 ./build.sh --open     # install, then relaunch
 ```
@@ -41,7 +41,7 @@ There is no unit-test target. Validate the pipeline with the hidden CLI mode:
 say -v Anna -o /tmp/test_de.aiff "Guten Morgen, das ist ein Test."
 say -v Samantha -o /tmp/test_en.aiff "Good morning, this is a test."
 
-BIN=~/Library/Developer/SimpleWhispr/build/debug/SimpleWhispr
+BIN=~/Library/Developer/OkWhispr/build/debug/OkWhispr
 "$BIN" --transcribe /tmp/test_de.aiff --language de --variant int5
 "$BIN" --transcribe /tmp/test_en.aiff --language en
 ```
@@ -49,7 +49,7 @@ BIN=~/Library/Developer/SimpleWhispr/build/debug/SimpleWhispr
 Verify the global hotkey without a keypress:
 
 ```bash
-~/Applications/SimpleWhispr.app/Contents/MacOS/SimpleWhispr --hotkey-selftest
+~/Applications/OkWhispr.app/Contents/MacOS/OkWhispr --hotkey-selftest
 ```
 
 ## Pull request checklist

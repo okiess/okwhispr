@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible problem with SimpleWhispr
+about: Report a reproducible problem with OkWhispr
 title: "[bug]: "
 ---
 
@@ -20,7 +20,7 @@ What you expected to happen.
 The actual behavior.
 
 **Environment (required)**
-- SimpleWhispr build number: (from `~/Library/Logs/SimpleWhispr.log`, or the
+- OkWhispr build number: (from `~/Library/Logs/OkWhispr.log`, or the
   menu bar)
 - macOS version:
 - Apple Silicon chip:
@@ -29,7 +29,7 @@ The actual behavior.
 - Accessibility permission granted: yes / no
 
 **Logs**
-Attach the relevant lines from `~/Library/Logs/SimpleWhispr.log` if you have
+Attach the relevant lines from `~/Library/Logs/OkWhispr.log` if you have
 them.
 
 **Additional context**

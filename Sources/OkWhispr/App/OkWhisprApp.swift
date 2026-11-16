@@ -3,7 +3,7 @@ import AppKit
 import Carbon.HIToolbox
 
 @main
-struct SimpleWhisprApp: App {
+struct OkWhisprApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
@@ -13,7 +13,7 @@ struct SimpleWhisprApp: App {
         // SwiftUI context. It MUST be declared before the Settings scene, or the
         // openSettings action is not resolved and opening Settings fails silently
         // in this menu-bar-only (accessory) app.
-        Window("", id: "SimpleWhispr.SettingsContext") {
+        Window("", id: "OkWhispr.SettingsContext") {
             SettingsContextView()
         }
         .windowResizability(.contentSize)
@@ -54,7 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         keepAliveActivity = ProcessInfo.processInfo.beginActivity(
             options: [.automaticTerminationDisabled, .suddenTerminationDisabled],
-            reason: "SimpleWhispr is a resident dictation agent and must stay in the menu bar.")
+            reason: "OkWhispr is a resident dictation agent and must stay in the menu bar.")
         ProcessInfo.processInfo.disableSuddenTermination()
 
         // Force the lazy AppState to create on main, which preloads the engine.
@@ -84,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         GlobalHotkey.shared.register(keyCode: UInt32(kVK_RightCommand), modifiers: 0)
 
-        AppLogger.log("SimpleWhispr launched. engine=\(SettingsStore.shared.engine.displayName)")
+        AppLogger.log("OkWhispr launched. engine=\(SettingsStore.shared.engine.displayName)")
     }
 
     // Refuse system-initiated termination; allow only an explicit user quit.

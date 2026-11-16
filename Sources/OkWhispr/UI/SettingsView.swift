@@ -209,5 +209,5 @@ struct SettingsView: View {
 extension Notification.Name {
     /// Posted when engine / variant / language / paste settings change, so the
     /// running engine can reload.
-    static let didChangeSettings = Notification.Name("com.oliverkiessler.simplewhispr.settingsChanged")
+    static let didChangeSettings = Notification.Name("com.inceedo.okwhispr.settingsChanged")
 }

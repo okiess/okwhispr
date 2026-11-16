@@ -4,7 +4,7 @@ import ApplicationServices
 import AppKit
 import CoreGraphics
 
-/// Central place to check and request the permissions SimpleWhispr needs.
+/// Central place to check and request the permissions OkWhispr needs.
 ///
 /// - Microphone: to record speech.
 /// - Accessibility: to type the transcript into the active field (⌘V via CGEvent).
@@ -36,7 +36,7 @@ enum Permissions {
         AXIsProcessTrusted()
     }
 
-    /// Prompts the user to add SimpleWhispr to Accessibility. macOS shows the
+    /// Prompts the user to add OkWhispr to Accessibility. macOS shows the
     /// system dialog once; afterwards the user must toggle it in System Settings.
     static func openAccessibilitySettings() {
         let options = [
@@ -62,7 +62,7 @@ enum Permissions {
     }
 
     /// Requests the Input Monitoring permission (system dialog, once). The user
-    /// must then enable SimpleWhispr in System Settings → Privacy & Security →
+    /// must then enable OkWhispr in System Settings → Privacy & Security →
     /// Input Monitoring. After granting, the tap's health check re-enables it.
     static func requestInputMonitoring() {
         _ = CGRequestListenEventAccess()
@@ -90,7 +90,7 @@ enum Permissions {
     /// Input Monitoring, Accessibility, and Microphone, off the main thread.
     /// Never throws; failures are logged.
     static func resetAll() async {
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.oliverkiessler.simplewhispr"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.inceedo.okwhispr"
         for service in ["ListenEvent", "Accessibility", "Microphone"] {
             await runTccUtilReset(service: service, bundleID: bundleID)
         }

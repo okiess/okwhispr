@@ -19,14 +19,14 @@ import SwiftUI
 ///
 /// A hidden 1x1 `Window` scene is required to give the environment action a valid
 /// SwiftUI context, and it MUST be declared before the `Settings` scene in the
-/// App body (see SimpleWhisprApp). See
+/// App body (see OkWhisprApp). See
 /// https://steipete.me/posts/2025/showing-settings-from-macos-menu-bar-items
 @MainActor
 enum SettingsWindow {
 
     /// Asks the hidden context view to open the Settings scene.
     static let openRequest =
-        Notification.Name("com.oliverkiessler.simplewhispr.openSettingsRequest")
+        Notification.Name("com.inceedo.okwhispr.openSettingsRequest")
 
     /// Brings the Settings window to the front, showing a Dock icon only for the
     /// duration the window is on screen.

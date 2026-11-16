@@ -1,13 +1,13 @@
 #!/bin/zsh
-# Builds SimpleWhispr and installs it to ~/Applications/SimpleWhispr.app.
-# Build products live in ~/Library/Developer/SimpleWhispr, outside the repo.
+# Builds OkWhispr and installs it to ~/Applications/OkWhispr.app.
+# Build products live in ~/Library/Developer/OkWhispr, outside the repo.
 #
 # Usage: ./build.sh            release build, install
 #        ./build.sh --debug    debug build, install
 #        ./build.sh --open     install, then quit the running copy and open the new one
 set -euo pipefail
 here=${0:A:h}
-name="SimpleWhispr"
+name="OkWhispr"
 scratch="$HOME/Library/Developer/$name/build"
 config=release
 [[ " $* " == *" --debug "* ]] && config=debug
@@ -49,12 +49,18 @@ bin="$scratch/$config/$name"
 	echo "build failed: binary not found"
 	exit 1
 }
-# swift build can report success while an edited file failed to compile. Catch that.
+# A newer source mtime (e.g. after a git checkout) does not mean the binary is
+# stale: swift build tracks content, not mtime, so an up-to-date rebuild reports
+# no compile output. Only fail when a re-check actually reports a compile error.
 stale=$(find "$here/Sources" -name '*.swift' -newer "$bin" 2>/dev/null | head -1)
 if [[ -n "$stale" ]]; then
-	echo "build failed: binary is older than $stale"
-	swift build -c "$config" --package-path "$here" --scratch-path "$scratch" 2>&1 | grep -E "error:" | head -20
-	exit 1
+	rebuild_log=$(swift build -c "$config" --package-path "$here" --scratch-path "$scratch" 2>&1)
+	if echo "$rebuild_log" | grep -q "error:"; then
+		echo "build failed: $stale"
+		echo "$rebuild_log" | grep -E "error:" | head -20
+		exit 1
+	fi
+	echo "source mtime newer than binary, but content is up to date; continuing"
 fi
 
 # Monotonic build number (incremented on every build) used as CFBundleVersion.
@@ -101,10 +107,10 @@ if [[ "$identity" == "-" ]]; then
 	codesign --force --deep --sign - "$app" 2>&1 | grep -v "replacing existing signature" || true
 else
 	# A real signature (Developer ID / Apple Development) uses the hardened
-	# runtime plus the app's entitlements. See SimpleWhispr.entitlements.
+	# runtime plus the app's entitlements. See OkWhispr.entitlements.
 	echo "signing with: $identity"
 	codesign --force --deep --options runtime \
-		--entitlements "$here/SimpleWhispr.entitlements" \
+		--entitlements "$here/OkWhispr.entitlements" \
 		--sign "$identity" "$app" 2>&1 | grep -v "replacing existing signature" || true
 fi
 echo "installed $app (signed: $identity)"

@@ -8,7 +8,7 @@ import CohereTranscribeASR
 /// A hidden command-line test mode that verifies the full transcription
 /// pipeline end-to-end without a microphone. Usage:
 ///
-///   SimpleWhispr --transcribe <audioFile> [--language de|en|...] [--variant int5|int8|fp16]
+///   OkWhispr --transcribe <audioFile> [--language de|en|...] [--variant int5|int8|fp16]
 ///
 /// It loads the local model (downloading it on first use), decodes the audio
 /// file, transcribes it, prints the result, and exits. This is how the build is
@@ -130,7 +130,7 @@ enum TranscribeCLI {
     /// deployed login-item app is denied - it is a smoke test, not proof the
     /// installed app works.
     ///
-    ///   SimpleWhispr --hotkey-selftest
+    ///   OkWhispr --hotkey-selftest
     @discardableResult
     static func launchHotkeySelftest(_ arguments: [String]) -> Bool {
         guard arguments.contains("--hotkey-selftest") else { return false }

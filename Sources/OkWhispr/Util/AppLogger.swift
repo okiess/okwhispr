@@ -1,15 +1,15 @@
 import Foundation
 
 /// A tiny file logger so a menu-bar app (no stdout) can be inspected.
-/// Writes to ~/Library/Logs/SimpleWhispr.log.
+/// Writes to ~/Library/Logs/OkWhispr.log.
 enum AppLogger {
     static let logURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs", isDirectory: true)
-        return dir.appendingPathComponent("SimpleWhispr.log")
+        return dir.appendingPathComponent("OkWhispr.log")
     }()
 
-    private static let queue = DispatchQueue(label: "com.oliverkiessler.simplewhispr.log")
+    private static let queue = DispatchQueue(label: "com.inceedo.okwhispr.log")
 
     static func log(_ message: String) {
         let line = "\(ISO8601DateFormatter().string(from: Date()))  \(message)\n"

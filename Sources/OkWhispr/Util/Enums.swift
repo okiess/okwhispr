@@ -1,6 +1,6 @@
 import Foundation
 
-/// The transcription engines SimpleWhispr can run.
+/// The transcription engines OkWhispr can run.
 enum TranscriptionEngine: String, CaseIterable, Codable {
     /// Local, fully offline 2B-parameter model (Cohere Transcribe 2B) via MLX.
     case cohere

@@ -6,7 +6,7 @@ cheat sheet for making and verifying changes.
 
 ## What this is
 
-SimpleWhispr is a tiny, local-first dictation app for macOS (Apple Silicon,
+OkWhispr is a tiny, local-first dictation app for macOS (Apple Silicon,
 macOS 15+). Hold the **right Command** key, speak, release; the transcript is
 typed into the active text field. Transcription runs on-device with the Cohere
 Transcribe 2B model via MLX. It is a menu bar app (no dock icon).
@@ -24,14 +24,14 @@ Transcribe 2B model via MLX. It is a menu bar app (no dock icon).
 ## Build
 
 ```bash
-./build.sh            # release build, installs to ~/Applications/SimpleWhispr.app
+./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build, installs
 ./build.sh --open     # install, then quit the running copy and open the new one
 ```
 
 Notes:
 
-- Build products live in `~/Library/Developer/SimpleWhispr/build`, outside the
+- Build products live in `~/Library/Developer/OkWhispr/build`, outside the
   repo (scratch path is fixed in `build.sh`).
 - The first build fetches MLX and the Swift toolchain dependencies and can take
   several minutes.
@@ -43,7 +43,7 @@ Notes:
   rebuild:
 
   ```bash
-  SCRATCH=~/Library/Developer/SimpleWhispr/build
+  SCRATCH=~/Library/Developer/OkWhispr/build
   rm -rf "$SCRATCH/out/Intermediates.noindex/XCBuildData" \
          "$SCRATCH/out/Intermediates.noindex/mlx-swift.build" \
          "$SCRATCH/.buildSystem_release" "$SCRATCH/.buildSystem_debug"
@@ -54,7 +54,7 @@ Notes:
 - `build.sh` signs the app with a Developer ID certificate (from
   `.env.signing`) when one is available, otherwise an Apple Development
   identity, otherwise ad hoc. A real signature uses the hardened runtime plus
-  `SimpleWhispr.entitlements`. See the signing section below. Signature and
+  `OkWhispr.entitlements`. See the signing section below. Signature and
   install path are tied to TCC permissions, so keep both stable.
 
 ## Test
@@ -66,7 +66,7 @@ No unit-test target exists. The pipeline is validated with the hidden CLI mode:
 say -v Anna -o /tmp/test_de.aiff "Guten Morgen, das ist ein Test."
 say -v Samantha -o /tmp/test_en.aiff "Good morning, this is a test."
 
-BIN=~/Library/Developer/SimpleWhispr/build/debug/SimpleWhispr
+BIN=~/Library/Developer/OkWhispr/build/debug/OkWhispr
 "$BIN" --transcribe /tmp/test_de.aiff --language de --variant int5
 "$BIN" --transcribe /tmp/test_en.aiff --language en
 ```
@@ -74,13 +74,13 @@ BIN=~/Library/Developer/SimpleWhispr/build/debug/SimpleWhispr
 Verify the global hotkey without a real keypress:
 
 ```bash
-~/Applications/SimpleWhispr.app/Contents/MacOS/SimpleWhispr --hotkey-selftest
+~/Applications/OkWhispr.app/Contents/MacOS/OkWhispr --hotkey-selftest
 ```
 
 It prints `PASSED` / `FAILED` with the Accessibility state. A `FAILED` with
 `trusted=false` means Accessibility permission is not granted yet.
 
-Logs: `~/Library/Logs/SimpleWhispr.log`.
+Logs: `~/Library/Logs/OkWhispr.log`.
 
 After changing UI or layout, confirm visually: build, install, relaunch
 (`./build.sh --open`), and check the menu bar panel and the Settings window in
@@ -89,7 +89,7 @@ both light and dark mode.
 ## Signing and notarization
 
 `build.sh` resolves a signing identity in priority order and signs the app
-bundle in `~/Applications/SimpleWhispr.app`:
+bundle in `~/Applications/OkWhispr.app`:
 
 1. `DEVELOPER_ID_APPLICATION` from `.env.signing` (Developer ID, the default).
 2. `SIGN_IDENTITY` environment override.
@@ -97,7 +97,7 @@ bundle in `~/Applications/SimpleWhispr.app`:
 4. Ad hoc (`-`) when no certificate is present.
 
 A real signature (anything but ad hoc) is signed with `--options runtime`
-(hardened runtime) plus `SimpleWhispr.entitlements`:
+(hardened runtime) plus `OkWhispr.entitlements`:
 
 - `com.apple.security.app-sandbox = false` - the app types into the frontmost
   app via a CGEventTap and pastes with Cmd-V, which needs Accessibility and is
@@ -144,8 +144,8 @@ the same; a new identity or path re-breaks TCC and needs one more reset.
 Verify a signed build locally:
 
 ```bash
-codesign --verify --deep --strict ~/Applications/SimpleWhispr.app
-codesign -dv --verbose=4 ~/Applications/SimpleWhispr.app  # shows the runtime
+codesign --verify --deep --strict ~/Applications/OkWhispr.app
+codesign -dv --verbose=4 ~/Applications/OkWhispr.app  # shows the runtime
 ```
 
 ## Architecture
@@ -159,7 +159,7 @@ release Cmd     ->  Cohere Transcribe 2B (MLX) transcribes locally
                       (the previous clipboard content is restored afterwards)
 ```
 
-The source tree (`Sources/SimpleWhispr/`):
+The source tree (`Sources/OkWhispr/`):
 
 - `App/`        menu bar scene, app delegate, hotkey wiring, `AppState`.
 - `Hotkey/`     `CGEventTap` on flags-changed; hold right Cmd. Needs Accessibility.
