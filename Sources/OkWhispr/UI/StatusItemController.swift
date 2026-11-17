@@ -69,12 +69,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private var tooltip: String {
         switch appState.phase {
         case .idle:
-            return appState.modelReady ? "OkWhispr — hold right ⌘ to dictate"
-                : "OkWhispr — preparing model…"
+            return appState.modelReady ? L.tooltipReady : L.tooltipPreparing
         case .listening:
-            return "Listening… release right ⌘ to transcribe"
+            return L.tooltipListening
         case .transcribing:
-            return "Transcribing…"
+            return L.tooltipTranscribing
         }
     }
 
@@ -103,12 +102,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings),
+        let settingsItem = NSMenuItem(title: L.menuSettings, action: #selector(openSettings),
                                   keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let login = NSMenuItem(title: "Launch at login",
+        let login = NSMenuItem(title: L.menuLaunchAtLogin,
                                action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
         login.target = self
         login.state = settings.launchAtLogin ? .on : .off
@@ -118,7 +117,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         // re-request the permissions. Shown when a permission is missing, which
         // includes the stale-signature case (the check returns false then too).
         if !appState.inputMonitoringGranted || !appState.accessibilityGranted || !appState.micGranted {
-            let reset = NSMenuItem(title: "Reset permissions…",
+            let reset = NSMenuItem(title: L.menuResetPermissions,
                                    action: #selector(resetPermissionsAction), keyEquivalent: "")
             reset.target = self
             menu.addItem(reset)
@@ -126,7 +125,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "Quit OkWhispr", action: #selector(quit),
+        let quit = NSMenuItem(title: L.menuQuit, action: #selector(quit),
                               keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
@@ -134,27 +133,28 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     private var statusLine: String {
         if let error = appState.errorMessage {
-            return "⚠︎ \(error)"
+            return L.statusError(error)
         }
         if !appState.inputMonitoringGranted {
-            return "⚠︎ Enable Input Monitoring (tap won't fire)"
+            return L.statusInputMonitoring
         }
         switch appState.phase {
         case .idle:
-            return appState.modelReady ? "Ready · \(settings.language.uppercased())"
-                : String(format: "Preparing model… %.0f%%", appState.modelProgress * 100)
+            return appState.modelReady
+                ? L.statusReady(languageCode: settings.language)
+                : L.statusPreparing(percent: appState.modelProgress * 100)
         case .listening:
-            return "Listening…"
+            return L.statusListening
         case .transcribing:
-            return "Transcribing…"
+            return L.statusTranscribing
         }
     }
 
     private var toggleTitle: String {
         switch appState.phase {
-        case .idle: return "Start dictation"
-        case .listening: return "Stop dictation"
-        case .transcribing: return "Working…"
+        case .idle: return L.toggleStart
+        case .listening: return L.toggleStop
+        case .transcribing: return L.toggleWorking
         }
     }
 

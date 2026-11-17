@@ -148,7 +148,7 @@ final class AppState: ObservableObject {
             micGranted = granted
             refreshPermissions()
             if !granted {
-                errorMessage = "Microphone access was not granted. Allow it in System Settings to use dictation."
+                errorMessage = L.errMicNotGranted
             }
         }
     }
@@ -191,7 +191,7 @@ final class AppState: ObservableObject {
                 modelReady = true
             } catch {
                 AppLogger.error("engine prepare failed: \(error)")
-                errorMessage = "Model could not be loaded: \(error)"
+                errorMessage = L.errModelLoad("\(error)")
                 modelReady = false
             }
             isModelLoading = false
@@ -215,7 +215,7 @@ final class AppState: ObservableObject {
 
         guard micGranted else {
             requestMicPermission()
-            errorMessage = "Microphone access is required."
+            errorMessage = L.errMicRequired
             return
         }
 
@@ -223,7 +223,7 @@ final class AppState: ObservableObject {
             try recorder.start()
         } catch {
             AppLogger.error("recorder start failed: \(error)")
-            errorMessage = "Could not start recording: \(error)"
+            errorMessage = L.errRecordStart("\(error)")
             return
         }
         captureInProgress = true
@@ -271,7 +271,7 @@ final class AppState: ObservableObject {
                 self.phase = .idle
             } catch {
                 AppLogger.error("transcription failed: \(error)")
-                self.errorMessage = "Transcription failed: \(error)"
+                self.errorMessage = L.errTranscription("\(error)")
                 self.phase = .idle
             }
         }

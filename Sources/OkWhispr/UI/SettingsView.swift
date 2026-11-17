@@ -6,31 +6,31 @@ struct SettingsView: View {
     @ObservedObject var appState: AppState
     @ObservedObject private var settings = SettingsStore.shared
 
-    private static let languages: [(code: String, name: String)] = [
-        ("de", "German (Deutsch)"),
-        ("en", "English"),
-        ("fr", "French"),
-        ("es", "Spanish"),
-        ("it", "Italian"),
-        ("pt", "Portuguese"),
-        ("nl", "Dutch"),
-        ("pl", "Polish"),
-        ("el", "Greek"),
-        ("vi", "Vietnamese"),
-        ("zh", "Chinese"),
-        ("ar", "Arabic"),
-        ("ja", "Japanese"),
-        ("ko", "Korean"),
+    private static let languages: [String] = [
+        "de",
+        "en",
+        "fr",
+        "es",
+        "it",
+        "pt",
+        "nl",
+        "pl",
+        "el",
+        "vi",
+        "zh",
+        "ar",
+        "ja",
+        "ko",
     ]
 
     var body: some View {
         TabView {
             generalTab
-                .tabItem { Label("General", systemImage: "gearshape") }
+                .tabItem { Label(L.tabGeneral, systemImage: "gearshape") }
             modelTab
-                .tabItem { Label("Model", systemImage: "cpu") }
+                .tabItem { Label(L.tabModel, systemImage: "cpu") }
             permissionsTab
-                .tabItem { Label("Permissions", systemImage: "lock.shield") }
+                .tabItem { Label(L.tabPermissions, systemImage: "lock.shield") }
         }
         .frame(width: 460, height: 360)
         .onReceive(NotificationCenter.default.publisher(for: .didChangeSettings)) { _ in
@@ -51,35 +51,35 @@ struct SettingsView: View {
 
     private var generalTab: some View {
         Form {
-            Picker("Language", selection: $settings.language) {
-                ForEach(Self.languages, id: \.code) { item in
-                    Text(item.name).tag(item.code)
+            Picker(L.settingsLanguage, selection: $settings.language) {
+                ForEach(Self.languages, id: \.self) { code in
+                    Text(L.languageName(code)).tag(code)
                 }
             }
-            .help("Language spoken into the microphone. The model must support it.")
+            .help(L.settingsLanguageHelp)
 
-            Toggle("Paste the result into the active field (⌘V)", isOn: $settings.pasteAfter)
-                .help("When on, the transcript is pasted where your cursor is. When off, it is only copied to your clipboard.")
+            Toggle(L.settingsPasteToggle, isOn: $settings.pasteAfter)
+                .help(L.settingsPasteHelp)
 
             HStack {
-                Text("Minimum talk time")
+                Text(L.settingsMinTalkTime)
                 Picker("", selection: $settings.silenceGuardMs) {
-                    Text("200 ms").tag(200)
-                    Text("350 ms").tag(350)
-                    Text("600 ms").tag(600)
+                    Text(L.settingsMs(200)).tag(200)
+                    Text(L.settingsMs(350)).tag(350)
+                    Text(L.settingsMs(600)).tag(600)
                 }
                 .labelsHidden()
-                Text("— taps shorter than this are ignored").foregroundStyle(.secondary)
+                Text(L.settingsMsNote).foregroundStyle(.secondary)
             }
-            .help("Guards against accidental key taps that start and stop recording.")
+            .help(L.settingsMinTalkHelp)
 
             Divider()
-            Text("Shortcut").font(.headline)
+            Text(L.settingsShortcut).font(.headline)
             HStack {
-                Text("Hold")
+                Text(L.settingsHold)
                 Image(systemName: "command")
-                Text("right")
-                Text("and speak, then release to transcribe.")
+                Text(L.settingsRight)
+                Text(L.settingsSpeakRelease)
                 Spacer()
             }
             .font(.callout)
@@ -92,30 +92,30 @@ struct SettingsView: View {
 
     private var modelTab: some View {
         Form {
-            Picker("Engine", selection: $settings.engine) {
+            Picker(L.settingsEngine, selection: $settings.engine) {
                 ForEach(TranscriptionEngine.allCases, id: \.self) { engine in
-                    Text(engine.displayName).tag(engine)
+                    Text(L.engineName(engine)).tag(engine)
                 }
             }
-            .help("Cohere Transcribe 2B is a local 2B-parameter model. Apple On-Device needs no download.")
+            .help(L.settingsEngineHelp)
 
             if settings.engine == .cohere {
-                Picker("Precision", selection: $settings.variant) {
+                Picker(L.settingsPrecision, selection: $settings.variant) {
                     ForEach(CohereVariant.allCases, id: \.self) { variant in
-                        Text(variant.displayName).tag(variant)
+                        Text(L.variantName(variant)).tag(variant)
                     }
                 }
-                .help("Higher precision = better quality but more memory and download size.")
+                .help(L.settingsPrecisionHelp)
             }
 
             Divider()
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Model status").font(.headline)
+                    Text(L.settingsModelStatus).font(.headline)
                     Text(modelStatusText).font(.callout).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Reload") {
+                Button(L.settingsReload) {
                     NotificationCenter.default.post(name: .didChangeSettings, object: nil)
                 }
             }
@@ -126,15 +126,15 @@ struct SettingsView: View {
 
     private var modelStatusText: String {
         if appState.isModelLoading {
-            return "Loading \(appState.currentEngine.shortName)…"
+            return L.statusLoading(name: appState.currentEngine.shortName)
         }
         if appState.modelReady {
-            return "Ready"
+            return L.statusReadyShort
         }
         if let error = appState.errorMessage {
             return error
         }
-        return "Not loaded yet"
+        return L.statusNotLoaded
     }
 
     // MARK: Permissions
@@ -142,21 +142,21 @@ struct SettingsView: View {
     private var permissionsTab: some View {
         Form {
             permissionRow(
-                title: "Microphone",
+                title: L.permMic,
                 granted: appState.micGranted,
-                help: "Required to record your speech.",
+                help: L.permMicHelp,
                 action: { appState.requestMicPermission() }
             )
             permissionRow(
-                title: "Accessibility",
+                title: L.permAccessibility,
                 granted: appState.accessibilityGranted,
-                help: "Required so the transcript can be typed (⌘V) into the app you are using.",
+                help: L.permAccessibilityHelp,
                 action: { appState.openAccessibility() }
             )
             permissionRow(
-                title: "Input Monitoring",
+                title: L.permInputMonitoring,
                 granted: appState.inputMonitoringGranted,
-                help: "Required for the global hotkey. Without it the right-⌘ tap gets no keys and the dictation hotkey does not fire. If it shows on but the tap still does not fire, it may be tied to a previous app signature - use \"Reset & re-request\" below.",
+                help: L.permInputMonitoringHelp,
                 action: { appState.requestInputMonitoring() }
             )
 
@@ -164,14 +164,14 @@ struct SettingsView: View {
                 Divider()
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Still not working?").font(.headline)
-                        Text("After a signing change the permissions can become stale. Reset clears them so you can re-grant to the current build.")
+                        Text(L.permStillNotWorking).font(.headline)
+                        Text(L.permStaleExplanation)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
-                    Button("Reset & re-request") { appState.resetPermissions() }
+                    Button(L.permResetReRequest) { appState.resetPermissions() }
                 }
             }
         }
@@ -195,10 +195,10 @@ struct SettingsView: View {
             }
             Spacer()
             if granted {
-                Label("Granted", systemImage: "checkmark.circle.fill")
+                Label(L.permGranted, systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             } else {
-                Button("Grant…") {
+                Button(L.permGrant) {
                     action()
                 }
             }
