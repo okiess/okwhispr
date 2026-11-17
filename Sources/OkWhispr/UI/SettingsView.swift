@@ -5,6 +5,11 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject var appState: AppState
     @ObservedObject private var settings = SettingsStore.shared
+    @ObservedObject private var modelStorage = ModelStorage.shared
+
+    /// The model(s) pending deletion, held so a confirmation dialog can name them.
+    @State private var pendingDelete: [ModelInfo]? = nil
+    @State private var pendingDeleteAll = false
 
     private static let languages: [String] = [
         "de",
@@ -32,7 +37,7 @@ struct SettingsView: View {
             permissionsTab
                 .tabItem { Label(L.tabPermissions, systemImage: "lock.shield") }
         }
-        .frame(width: 460, height: 360)
+        .frame(width: 460, height: 440)
         .onReceive(NotificationCenter.default.publisher(for: .didChangeSettings)) { _ in
             appState.applySettings()
         }
@@ -119,9 +124,99 @@ struct SettingsView: View {
                     NotificationCenter.default.post(name: .didChangeSettings, object: nil)
                 }
             }
+
+            Divider()
+            storageLocationSection
+
+            Divider()
+            downloadedModelsSection
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear { appState.refreshModels() }
+    }
+
+    // MARK: Model - storage location
+
+    private var storageLocationSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(L.settingsStorageLocation).font(.headline)
+                Spacer()
+                Button(L.settingsRevealInFinder) { modelStorage.revealInFinder(nil) }
+            }
+            .help(L.settingsStorageLocationHelp)
+            Text(ModelStorage.displayPath(modelStorage.baseDirectory))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+        }
+    }
+
+    // MARK: Model - downloaded models
+
+    private var downloadedModelsSection: some View {
+        Group {
+            if modelStorage.models.isEmpty {
+                Text(L.settingsNoModelsYet)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L.settingsDownloadedModels).font(.headline)
+                    ForEach(modelStorage.models) { model in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(model.title).font(.callout)
+                                Text(ModelStorage.humanSize(model.sizeBytes))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button(role: .destructive) { pendingDelete = [model] } label: {
+                                Image(systemName: "trash")
+                            }
+                            .help(L.settingsDelete)
+                        }
+                    }
+                    if modelStorage.models.count > 1 {
+                        Button(role: .destructive) { pendingDeleteAll = true } label: {
+                            Text(L.settingsDeleteAll)
+                        }
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            L.confirmDeleteModelTitle,
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(L.settingsDelete, role: .destructive) {
+                let selected = pendingDelete ?? []
+                pendingDelete = nil
+                appState.deleteModels(selected)
+            }
+            Button(L.cancel, role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text(L.confirmDeleteModelMessage(name: pendingDelete?.first?.title ?? ""))
+        }
+        .confirmationDialog(
+            L.confirmDeleteAllTitle,
+            isPresented: $pendingDeleteAll,
+            titleVisibility: .visible
+        ) {
+            Button(L.settingsDeleteAll, role: .destructive) {
+                let selected = modelStorage.models
+                pendingDeleteAll = false
+                appState.deleteModels(selected)
+            }
+            Button(L.cancel, role: .cancel) { pendingDeleteAll = false }
+        } message: {
+            Text(L.confirmDeleteAllMessage)
+        }
     }
 
     private var modelStatusText: String {

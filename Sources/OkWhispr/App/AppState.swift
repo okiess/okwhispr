@@ -205,6 +205,46 @@ final class AppState: ObservableObject {
         prepareEngine()
     }
 
+    // MARK: - Model cache management
+
+    /// Re-reads the downloaded model list from disk for the Settings UI.
+    func refreshModels() {
+        Task { await ModelStorage.shared.refresh() }
+    }
+
+    /// Moves the given model directories to the Trash. When the currently loaded
+    /// model is among them, the in-memory reference is dropped so the next
+    /// dictation re-downloads a fresh copy instead of using a deleted file.
+    func deleteModels(_ infos: [ModelInfo]) {
+        guard !infos.isEmpty else { return }
+        let activeVariant = settings.variant
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let activeWasDeleted = infos.contains { $0.variant == activeVariant }
+            do {
+                try await ModelStorage.shared.trash(infos)
+            } catch {
+                AppLogger.error("model delete failed: \(error)")
+                self.errorMessage = L.errModelDelete("\(error)")
+            }
+            if activeWasDeleted {
+                self.dropLoadedModel()
+            }
+            await ModelStorage.shared.refresh()
+        }
+    }
+
+    /// Discards the loaded model and rebuilds a fresh (unloaded) transcriber, so
+    /// the next dictation loads from disk again. Does not re-download on its own.
+    func dropLoadedModel() {
+        transcriber = TranscriberRegistry.make(
+            engine: settings.engine, variant: settings.variant, language: settings.language)
+        modelReady = false
+        isModelLoading = false
+        modelProgress = 0
+        errorMessage = nil
+    }
+
     // MARK: - Recording pipeline
 
     /// Called on hotkey key-down. Starts capture immediately (no model wait) so

@@ -128,6 +128,9 @@ enum L {
     static var menuQuit: String {
         de("OkWhispr beenden", en: "Quit OkWhispr")
     }
+    static var cancel: String {
+        de("Abbrechen", en: "Cancel")
+    }
 
     // MARK: - Settings tabs
 
@@ -216,6 +219,46 @@ enum L {
     }
     static var statusNotLoaded: String {
         de("Noch nicht geladen", en: "Not loaded yet")
+    }
+    static var settingsStorageLocation: String {
+        de("Speicherort", en: "Storage location")
+    }
+    static var settingsStorageLocationHelp: String {
+        de("Wo die Modell-Dateien auf der Festplatte abgelegt sind.",
+           en: "Where the model files are stored on disk.")
+    }
+    static var settingsRevealInFinder: String {
+        de("In Finder anzeigen", en: "Reveal in Finder")
+    }
+    static var settingsDownloadedModels: String {
+        de("Heruntergeladene Modelle", en: "Downloaded models")
+    }
+    static var settingsNoModelsYet: String {
+        de("Noch keine Modelle heruntergeladen.", en: "No models downloaded yet.")
+    }
+    static var settingsDelete: String {
+        de("Löschen", en: "Delete")
+    }
+    static var settingsDeleteAll: String {
+        de("Alle löschen", en: "Delete all")
+    }
+    static var confirmDeleteModelTitle: String {
+        de("Modell löschen?", en: "Delete model?")
+    }
+    static func confirmDeleteModelMessage(name: String) -> String {
+        de("\(name) wird in den Papierkorb verschoben und beim nächsten Gebrauch erneut heruntergeladen.",
+           en: "\(name) is moved to the Trash and re-downloaded on next use.")
+    }
+    static var confirmDeleteAllTitle: String {
+        de("Alle Modelle löschen?", en: "Delete all models?")
+    }
+    static var confirmDeleteAllMessage: String {
+        de("Alle heruntergeladenen Modelle werden in den Papierkorb verschoben und beim nächsten Gebrauch erneut heruntergeladen.",
+           en: "All downloaded models are moved to the Trash and re-downloaded on next use.")
+    }
+    static func errModelDelete(_ error: String) -> String {
+        de("Modell konnte nicht gelöscht werden: \(error)",
+           en: "Could not delete model: \(error)")
     }
 
     // MARK: - Settings: permissions
