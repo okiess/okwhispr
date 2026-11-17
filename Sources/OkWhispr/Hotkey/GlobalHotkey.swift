@@ -43,6 +43,9 @@ final class GlobalHotkey {
     /// Called on the main thread when the key goes up.
     var onStop: (() -> Void)?
 
+    /// Counts tap re-creations so a device-change recovery is diagnosable in the log.
+    private var reactivationCount = 0
+
     private init() {}
 
     /// Registers the tap. `keyCode` is the modifier virtual keycode (54 = right
@@ -123,10 +126,15 @@ final class GlobalHotkey {
 
     /// Re-creates the tap using the last-registered keycode. Called when Input
     /// Monitoring is granted while the app is already running, because a tap
-    /// created before the grant never starts receiving events. register() runs
+    /// created before the grant never starts receiving events, and after an
+    /// input device change (e.g. AirPods), when a Bluetooth reconnect can leave
+    /// the tap as a "dead tap" that only a re-creation recovers. register() runs
     /// unregister() first, so this is a clean, idempotent re-creation.
     func reactivate() {
+        reactivationCount &+= 1
         register(keyCode: activeKeyCode)
+        let enabled = eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
+        AppLogger.log("hotkey tap re-created (#\(reactivationCount)), enabled=\(enabled)")
     }
 
     func unregister() {

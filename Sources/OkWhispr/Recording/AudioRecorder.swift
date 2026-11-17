@@ -114,12 +114,15 @@ final class AudioRecorder: @unchecked Sendable {
     }
 
     /// Fired on the main queue when the default input or device topology
-    /// changes. The UID check in `start()` already forces a re-bind, so this only
-    /// logs the switch for diagnostics.
+    /// changes. The UID check in `start()` already forces a re-bind for the
+    /// recorder; this also broadcasts the change so other layers (the global
+    /// hotkey, which can become a "dead tap" after a Bluetooth reconnect) can
+    /// re-create their machinery.
     private func handleInputChange() {
         let uid = AudioDeviceMonitor.currentDefaultInputUID()
         let name = AudioDeviceMonitor.currentDefaultInputName() ?? "unknown"
         AppLogger.log("input device changed -> \(name) (\(uid ?? "none"))")
+        NotificationCenter.default.post(name: .okwhisprInputDeviceChanged, object: nil)
     }
 
     /// Stops and detaches the engine's input tap and graph. Safe to call multiple

@@ -34,6 +34,18 @@ final class AppState: ObservableObject {
     private var permissionWatcher: Timer?
     private var lastInputMonitoring = false
 
+    /// Debounces hotkey recovery after an input device change. A Bluetooth
+    /// reconnect (e.g. AirPods) can leave the CGEventTap as a "dead tap" that a
+    /// plain re-enable cannot recover; only a re-creation does. The generation
+    /// cancels a superseded flurry of device-change events so it does not spawn
+    /// many timers.
+    private var hotkeyRecoveryGeneration = 0
+
+    /// How many times, and at what delays, the hotkey tap is re-created after a
+    /// device change, to survive the Bluetooth stack's "delayed device
+    /// availability". The later attempts catch a slow-settling connection.
+    private static let hotkeyRecoveryDelays: [Double] = [0.5, 1.5, 3.0]
+
     /// Guards against a key-up that arrives before a key-down finished starting.
     private var captureInProgress = false
 
@@ -41,9 +53,39 @@ final class AppState: ObservableObject {
         refreshPermissions()
         lastInputMonitoring = Permissions.inputMonitoringGranted
         startPermissionWatcher()
+        observeInputDeviceChanges()
         // Preload the chosen engine in the background so the first dictation
         // does not have to wait for a model download or warm-up.
         prepareEngine()
+    }
+
+    /// Re-creates the global hotkey tap after an input device change, a few times
+    /// over ~3s to survive the Bluetooth stack's "delayed device availability".
+    private func observeInputDeviceChanges() {
+        NotificationCenter.default.addObserver(
+            forName: .okwhisprInputDeviceChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.scheduleHotkeyRecovery()
+            }
+        }
+    }
+
+    /// Debounced: each call supersedes the in-flight recovery sequence, then
+    /// re-creates the tap at `hotkeyRecoveryDelays`. Only the latest flurry's
+    /// attempts run.
+    func scheduleHotkeyRecovery() {
+        hotkeyRecoveryGeneration &+= 1
+        let generation = hotkeyRecoveryGeneration
+        for delay in Self.hotkeyRecoveryDelays {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, generation == self.hotkeyRecoveryGeneration else { return }
+                AppLogger.log("input device changed; re-creating hotkey tap (attempt @\(delay)s)")
+                GlobalHotkey.shared.reactivate()
+            }
+        }
     }
 
     // MARK: - Permissions

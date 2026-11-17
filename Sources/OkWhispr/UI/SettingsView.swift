@@ -210,4 +210,10 @@ extension Notification.Name {
     /// Posted when engine / variant / language / paste settings change, so the
     /// running engine can reload.
     static let didChangeSettings = Notification.Name("com.inceedo.okwhispr.settingsChanged")
+
+    /// Posted when the system input/audio device topology changes (for example
+    /// AirPods connecting or the default input switching). Used to re-create the
+    /// global hotkey tap, which can become a "dead tap" after a Bluetooth
+    /// reconnect until it is re-created.
+    static let okwhisprInputDeviceChanged = Notification.Name("com.inceedo.okwhispr.inputDeviceChanged")
 }
