@@ -31,6 +31,7 @@ dictation.
 ```bash
 ./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build
+./build.sh --dmg      # build, install, and create a distributable DMG
 ./build.sh --open     # install, then relaunch
 ```
 

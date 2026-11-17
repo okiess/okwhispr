@@ -30,6 +30,7 @@ request. The full build and architecture reference lives in `AGENTS.md` and
 ```bash
 ./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build
+./build.sh --dmg      # build, install, and create a distributable DMG
 ./build.sh --open     # install, then relaunch
 ```
 

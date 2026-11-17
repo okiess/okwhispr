@@ -26,6 +26,7 @@ Transcribe 2B model via MLX. It is a menu bar app (no dock icon).
 ```bash
 ./build.sh            # release build, installs to ~/Applications/OkWhispr.app
 ./build.sh --debug    # faster debug build, installs
+./build.sh --dmg      # build, install, and create a distributable DMG
 ./build.sh --open     # install, then quit the running copy and open the new one
 ```
 
@@ -127,6 +128,12 @@ NOTARIZE=1 ./build.sh
 It requires a Developer ID certificate plus `APPLE_ID`, `APPLE_TEAM_ID`, and
 `APPLE_APP_PASSWORD` from `.env.signing`, then zips the app, submits it with
 `xcrun notarytool ... --wait`, and staples the ticket with `xcrun stapler`.
+
+A distributable DMG is created with `--dmg`. It ships the just-built, signed app
+plus an `Applications` symlink for drag-to-install, and lands at
+`~/Library/Developer/OkWhispr/build/dist/OkWhispr-<build>.dmg`. Combine it with
+`NOTARIZE=1 ./build.sh --dmg` to sign, notarize, and staple the image itself
+(the installed `.app` is still notarized separately on the normal path).
 
 TCC caveat: Microphone and Accessibility are tied to the signature. Switching
 the identity (for example Apple Development to Developer ID) or the install path

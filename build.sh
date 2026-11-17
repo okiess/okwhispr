@@ -4,6 +4,7 @@
 #
 # Usage: ./build.sh            release build, install
 #        ./build.sh --debug    debug build, install
+#        ./build.sh --dmg     build, install, and create a distributable DMG
 #        ./build.sh --open     install, then quit the running copy and open the new one
 set -euo pipefail
 here=${0:A:h}
@@ -11,6 +12,8 @@ name="OkWhispr"
 scratch="$HOME/Library/Developer/$name/build"
 config=release
 [[ " $* " == *" --debug "* ]] && config=debug
+dmg=0
+[[ " $* " == *" --dmg "* ]] && dmg=1
 
 # Load signing / notarization credentials from .env.signing when present
 # (gitignored via .env*). Provides DEVELOPER_ID_APPLICATION and, for
@@ -139,6 +142,44 @@ if [[ "${NOTARIZE:-0}" == "1" ]]; then
 	xcrun stapler staple "$app"
 	rm -f "$zip_path"
 	echo "notarization complete"
+fi
+
+# Optional DMG creation (--dmg). Packages the just-built, signed (and, with
+# NOTARIZE=1, notarized) app into a user-friendly disk image for distribution.
+# The image ships the app plus an "Applications" symlink for drag-to-install.
+if [[ "$dmg" == 1 ]]; then
+	dist="$scratch/dist"
+	dmg_out="$dist/$name-$build_number.dmg"
+	stage="$scratch/dmg-build"
+	rm -rf "$stage"; mkdir -p "$stage" "$dist"
+	cp -R "$app" "$stage/$name.app"
+	ln -s /Applications "$stage/Applications"
+	rm -f "$dmg_out"
+	echo "creating DMG at $dmg_out"
+	# diskutil is the non-deprecated replacement for the hdiutil image-creation
+	# path. Source and destination are positional args; we rm the target first so
+	# no --overwrite flag is needed.
+	diskutil image create from --format UDZO --volname "$name" "$stage" "$dmg_out"
+	rm -rf "$stage"
+	if [[ "$identity" == "-" ]]; then
+		echo "warning: DMG not signed (no certificate found)"
+	else
+		echo "signing DMG with: $identity"
+		# A DMG image is a single file, so sign it plainly with a timestamp;
+		# --options runtime / entitlements apply to app bundles, not the image.
+		codesign --force --timestamp --sign "$identity" "$dmg_out"
+	fi
+	if [[ "${NOTARIZE:-0}" == "1" ]]; then
+		echo "notarizing DMG..."
+		xcrun notarytool submit "$dmg_out" \
+			--apple-id "$APPLE_ID" \
+			--team-id "$APPLE_TEAM_ID" \
+			--password "$APPLE_APP_PASSWORD" \
+			--wait
+		xcrun stapler staple "$dmg_out"
+		echo "DMG notarization complete"
+	fi
+	echo "created DMG: $dmg_out"
 fi
 
 if [[ " $* " == *" --open "* ]]; then
