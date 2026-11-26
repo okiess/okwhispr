@@ -145,9 +145,11 @@ build.sh          swift build → .app bundle → codesign → ~/Applications
   is verified end-to-end for German and English (release build, installed
   `.app`). The MLX `mlx.metallib` is bundled into the `.app` by `build.sh`, so
   the installed app loads its GPU kernels without any extra setup.
-- The **Apple on-device** engine is a placeholder for now: on macOS 26+ Apple
-  replaced the classic `SFSpeechRecognizer` API with a streaming
-  `SpeechAnalyzer`, so it is not wired up yet. Select Cohere (the default).
+- The **Apple on-device** engine uses Apple's `SpeechAnalyzer` /
+  `SpeechTranscriber` API (macOS 26+) with the macOS system speech model. It
+  needs no app-managed model download; macOS may install the language's speech
+  assets on first use. On macOS 15 it reports itself unavailable. Test it with
+  `--engine apple` in the CLI mode.
 - Both the **hotkey and pasting** require **Accessibility** permission; without it
   the hotkey does not fire and the transcript is only copied to the clipboard
   (and you can paste it yourself). Grant it in System Settings → Privacy &

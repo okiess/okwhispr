@@ -210,8 +210,8 @@ enum L {
         de("Engine", en: "Engine")
     }
     static var settingsEngineHelp: String {
-        de("Cohere Transcribe 2B ist ein lokales 2B-Parameter-Modell. Apple On-Device benötigt keinen Download.",
-           en: "Cohere Transcribe 2B is a local 2B-parameter model. Apple On-Device needs no download.")
+        de("Cohere Transcribe 2B ist ein lokales 2B-Parameter-Modell. Apple On-Device nutzt das Spracherkennungsmodell von macOS (ab macOS 26) und benötigt keinen App-Download.",
+           en: "Cohere Transcribe 2B is a local 2B-parameter model. Apple On-Device uses the macOS speech model (macOS 26+) and needs no app download.")
     }
     static var settingsPrecision: String {
         de("Präzision", en: "Precision")
@@ -324,7 +324,7 @@ enum L {
             return de("Cohere Transcribe 2B (MLX, lokal)",
                       en: "Cohere Transcribe 2B (MLX, local)")
         case .apple:
-            return de("Apple On-Device", en: "Apple On-Device")
+            return de("Apple On-Device (macOS-Systemmodell)", en: "Apple On-Device (macOS system model)")
         }
     }
     static func variantName(_ variant: CohereVariant) -> String {
