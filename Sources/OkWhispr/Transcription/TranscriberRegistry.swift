@@ -2,10 +2,8 @@ import Foundation
 
 /// Builds a Transcriber for the chosen engine.
 ///
-/// The Cohere MLX engine is provided through `cohereFactory`, which is set by
-/// the MLX module when that dependency is linked. Until then it is nil and the
-/// app transparently falls back to the Apple on-device engine so dictation
-/// always works.
+/// Cohere runs the local MLX model; Apple uses the system `SpeechAnalyzer`
+/// (macOS 26+).
 enum TranscriberRegistry {
 
     static func make(engine: TranscriptionEngine, variant: CohereVariant, language: String) -> Transcriber {
@@ -16,6 +14,7 @@ enum TranscriberRegistry {
             return t
 
         case .apple:
+            AppLogger.log("using Apple on-device engine (SpeechAnalyzer)")
             return AppleOnDeviceTranscriber(language: language)
         }
     }

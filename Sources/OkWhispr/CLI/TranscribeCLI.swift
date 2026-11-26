@@ -8,7 +8,7 @@ import CohereTranscribeASR
 /// A hidden command-line test mode that verifies the full transcription
 /// pipeline end-to-end without a microphone. Usage:
 ///
-///   OkWhispr --transcribe <audioFile> [--language de|en|...] [--variant int5|int8|fp16]
+///   OkWhispr --transcribe <audioFile> [--language de|en|...] [--variant int5|int8|fp16] [--engine cohere|apple]
 ///
 /// It loads the local model (downloading it on first use), decodes the audio
 /// file, transcribes it, prints the result, and exits. This is how the build is
@@ -29,19 +29,25 @@ enum TranscribeCLI {
         let fileURL = URL(fileURLWithPath: arguments[idx + 1])
         let language = value(arguments, after: "--language", default: "de")
         let variant = parseVariant(arguments)
+        let rawEngine = value(arguments, after: "--engine", default: TranscriptionEngine.cohere.rawValue)
+        guard let engine = TranscriptionEngine(rawValue: rawEngine) else {
+            let valid = TranscriptionEngine.allCases.map(\.rawValue).joined(separator: ", ")
+            FileHandle.standardError.write(Data("Unknown --engine \"\(rawEngine)\". Valid: \(valid)\n".utf8))
+            exit(2)
+        }
 
-        AppLogger.log("CLI transcribe: \(fileURL.path) lang=\(language) variant=\(variant.rawValue)")
+        AppLogger.log("CLI transcribe: \(fileURL.path) lang=\(language) variant=\(variant.rawValue) engine=\(engine.rawValue)")
         // Fire and forget on the global executor, then exit when done. This keeps
         // the main run loop free so the async model load can make progress.
         Task {
-            let exitCode = await run(fileURL: fileURL, language: language, variant: variant)
+            let exitCode = await run(fileURL: fileURL, language: language, variant: variant, engine: engine)
             AppLogger.log("CLI transcribe finished (exit \(exitCode))")
             exit(Int32(exitCode))
         }
         return true
     }
 
-    private static func run(fileURL: URL, language: String, variant: CohereVariant) async -> Int32 {
+    private static func run(fileURL: URL, language: String, variant: CohereVariant, engine: TranscriptionEngine) async -> Int32 {
         guard let (samples, sampleRate) = try? decodeAudio(fileURL: fileURL) else {
             FileHandle.standardError.write(Data("Could not read audio file: \(fileURL.path)\n".utf8))
             return 2
@@ -52,9 +58,19 @@ enum TranscribeCLI {
             return 3
         }
 
-        let transcriber = CohereTranscriber(variant: variant, language: language)
-        transcriber.onProgress = { p in
+        let progress: (Double) -> Void = { p in
             FileHandle.standardError.write(Data(String(format: "loading model… %.0f%%\n", p * 100).utf8))
+        }
+        let transcriber: Transcriber
+        switch engine {
+        case .cohere:
+            let cohere = CohereTranscriber(variant: variant, language: language)
+            cohere.onProgress = progress
+            transcriber = cohere
+        case .apple:
+            let apple = AppleOnDeviceTranscriber(language: language)
+            apple.onProgress = progress
+            transcriber = apple
         }
         do {
             try await transcriber.ensureLoaded(language: language)

@@ -174,13 +174,18 @@ final class AppState: ObservableObject {
             variant: settings.variant,
             language: settings.language)
         // Wire the first-time download progress into the UI.
-        if let cohere = t as? CohereTranscriber {
-            cohere.onProgress = { [weak self] p in
-                Task { @MainActor in
-                    self?.modelProgress = p
-                    self?.isModelLoading = true
-                }
+        // Only update the progress while a load is running: a late tick that
+        // arrives after the load finished must not flip the UI back to loading.
+        let progressHandler: (Double) -> Void = { [weak self] p in
+            Task { @MainActor in
+                guard let self, self.isModelLoading else { return }
+                self.modelProgress = p
             }
+        }
+        if let cohere = t as? CohereTranscriber {
+            cohere.onProgress = progressHandler
+        } else if let apple = t as? AppleOnDeviceTranscriber {
+            apple.onProgress = progressHandler
         }
         transcriber = t
         Task {

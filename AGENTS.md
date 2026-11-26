@@ -172,7 +172,7 @@ The source tree (`Sources/OkWhispr/`):
 - `Hotkey/`     `CGEventTap` on flags-changed; hold right Cmd. Needs Accessibility.
 - `Recording/`  `AVAudioEngine` mic capture plus the `WAVWriter`.
 - `Transcription/`  `Transcriber` protocol, `CohereTranscriber` (MLX), an Apple
-  on-device fallback (currently a placeholder), and the registry.
+  on-device engine (`SpeechAnalyzer`, macOS 26+), and the registry.
 - `Input/`      pasteboard plus synthetic Cmd-V injection.
 - `UI/`         menu bar panel and Settings window.
 - `CLI/`        hidden `--transcribe <file>` test mode.
@@ -187,9 +187,9 @@ new engine and register it in `TranscriberRegistry`.
 
 - Default and recommended engine: Cohere Transcribe 2B (MLX), verified
   end-to-end for German and English.
-- Apple on-device engine: placeholder. On macOS 26+ Apple replaced the classic
-  `SFSpeechRecognizer` API with a streaming `SpeechAnalyzer`, so it is not wired
-  up yet. Keep Cohere as the default.
+- Apple on-device engine: `SpeechAnalyzer` / `SpeechTranscriber` (macOS 26+),
+  using the system speech model. Unavailable on macOS 15. Cohere stays the
+  default. CLI: `--engine apple`.
 - Both the hotkey and pasting require Accessibility permission. Without it, the
   hotkey does not fire and the transcript is only copied to the clipboard.
 - Launch-at-login persistence is not guaranteed with an ad-hoc signature,
