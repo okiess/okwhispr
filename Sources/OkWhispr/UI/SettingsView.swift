@@ -47,6 +47,9 @@ struct SettingsView: View {
         .onChange(of: settings.variant) { _, _ in
             NotificationCenter.default.post(name: .didChangeSettings, object: nil)
         }
+        .onChange(of: settings.hotkey) { _, newValue in
+            GlobalHotkey.shared.register(option: newValue)
+        }
         .onChange(of: settings.language) { _, _ in
             NotificationCenter.default.post(name: .didChangeSettings, object: nil)
         }
@@ -66,6 +69,9 @@ struct SettingsView: View {
             Toggle(L.settingsPasteToggle, isOn: $settings.pasteAfter)
                 .help(L.settingsPasteHelp)
 
+            Toggle(L.settingsOverlayToggle, isOn: $settings.showOverlay)
+                .help(L.settingsOverlayHelp)
+
             HStack {
                 Text(L.settingsMinTalkTime)
                 Picker("", selection: $settings.silenceGuardMs) {
@@ -80,14 +86,20 @@ struct SettingsView: View {
 
             Divider()
             Text(L.settingsShortcut).font(.headline)
-            HStack {
-                Text(L.settingsHold)
-                Image(systemName: "command")
-                Text(L.settingsRight)
-                Text(L.settingsSpeakRelease)
-                Spacer()
+            Picker(L.settingsHotkeyPicker, selection: $settings.hotkey) {
+                ForEach(HotkeyOption.allCases, id: \.self) { option in
+                    Text(L.hotkeyName(option)).tag(option)
+                }
             }
-            .font(.callout)
+            Text(L.settingsSpeakRelease)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            if settings.hotkey == .fn {
+                Text(L.settingsHotkeyFnNote)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .formStyle(.grouped)
         .padding()

@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 /// The transcription engines OkWhispr can run.
 enum TranscriptionEngine: String, CaseIterable, Codable {
@@ -37,14 +38,40 @@ enum CohereVariant: String, CaseIterable, Codable {
     }
 }
 
-/// The global hotkey. For now only "hold right Command" is offered, which is the
-/// user's preferred shortcut. It is kept as an enum so more can be added later.
+/// The global hold-to-talk key. Each option is a lone modifier key, observed
+/// on the flags-changed event stream.
 enum HotkeyOption: String, CaseIterable, Codable {
     case rightCommand
+    case fn
 
     var displayName: String {
         switch self {
         case .rightCommand: return "Hold right ⌘ (Command)"
+        case .fn: return "Hold fn (Globe)"
+        }
+    }
+
+    /// The modifier's virtual keycode (kVK_RightCommand = 54, kVK_Function = 63).
+    var keyCode: UInt32 {
+        switch self {
+        case .rightCommand: return 54
+        case .fn: return 63
+        }
+    }
+
+    /// The flag that is set while the modifier is held.
+    var flag: CGEventFlags {
+        switch self {
+        case .rightCommand: return .maskCommand
+        case .fn: return .maskSecondaryFn
+        }
+    }
+
+    /// Short symbol for tooltips ("right ⌘", "fn").
+    var symbol: String {
+        switch self {
+        case .rightCommand: return "⌘"
+        case .fn: return "fn"
         }
     }
 }

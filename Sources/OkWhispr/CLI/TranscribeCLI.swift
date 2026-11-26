@@ -130,7 +130,7 @@ enum TranscribeCLI {
     /// deployed login-item app is denied - it is a smoke test, not proof the
     /// installed app works.
     ///
-    ///   OkWhispr --hotkey-selftest
+    ///   OkWhispr --hotkey-selftest [--key fn]
     @discardableResult
     static func launchHotkeySelftest(_ arguments: [String]) -> Bool {
         guard arguments.contains("--hotkey-selftest") else { return false }
@@ -139,17 +139,25 @@ enum TranscribeCLI {
         var upFired = false
         GlobalHotkey.shared.onStart = { downFired = true; AppLogger.log("self-test: key DOWN received") }
         GlobalHotkey.shared.onStop = { upFired = true; AppLogger.log("self-test: key UP received") }
-        GlobalHotkey.shared.register(keyCode: UInt32(kVK_RightCommand), modifiers: 0)
+        var option = HotkeyOption.rightCommand
+        if let index = arguments.firstIndex(of: "--key"), index + 1 < arguments.count,
+           let parsed = HotkeyOption(rawValue: arguments[index + 1]) {
+            option = parsed
+        }
+        AppLogger.log("self-test key: \(option.rawValue)")
+        GlobalHotkey.shared.register(option: option)
 
         Task {
             try? await Task.sleep(nanoseconds: 300_000_000)
             let src = CGEventSource(stateID: .hidSystemState)
-            if let down = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(kVK_RightCommand), keyDown: true) {
-                down.flags = .maskCommand
+            if let down = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(option.keyCode), keyDown: true) {
+                down.type = .flagsChanged
+                down.flags = option.flag
                 down.post(tap: .cgSessionEventTap)
             }
             try? await Task.sleep(nanoseconds: 250_000_000)
-            if let up = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(kVK_RightCommand), keyDown: false) {
+            if let up = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(option.keyCode), keyDown: false) {
+                up.type = .flagsChanged
                 up.flags = []
                 up.post(tap: .cgSessionEventTap)
             }

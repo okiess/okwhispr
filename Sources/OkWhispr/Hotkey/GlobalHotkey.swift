@@ -31,8 +31,8 @@ final class GlobalHotkey {
     /// Throttles the re-enable log to at most once per 15s during busy periods.
     private var lastReenableLog = Date.distantPast
 
-    /// The modifier virtual keycode to react to (e.g. 54 = right Command).
-    fileprivate var activeKeyCode: UInt32 = 0
+    /// The modifier key to react to (right Command or fn).
+    fileprivate var activeOption: HotkeyOption = .rightCommand
 
     /// How long to wait before logging a repeated tap re-enable, so a busy main
     /// thread (e.g. during transcription) does not flood the log.
@@ -48,13 +48,12 @@ final class GlobalHotkey {
 
     private init() {}
 
-    /// Registers the tap. `keyCode` is the modifier virtual keycode (54 = right
-    /// Command, 55 = left Command, 61 = right Option, ...). `modifiers` is kept
-    /// for future non-modifier shortcuts and is 0 for a lone modifier key.
-    func register(keyCode: UInt32, modifiers: UInt32 = 0) {
+    /// Registers the tap for the given hold-to-talk modifier key. Calling it
+    /// again (e.g. after the user picks another key) re-creates the tap.
+    func register(option: HotkeyOption) {
         unregister()
 
-        activeKeyCode = keyCode
+        activeOption = option
         warnedMissingPermission = false
         lastReenableLog = .distantPast
 
@@ -81,7 +80,7 @@ final class GlobalHotkey {
         CGEvent.tapEnable(tap: tap, enable: true)
         startHealthCheck()
 
-        AppLogger.log("global hotkey tap registered (keyCode=\(keyCode), modifiers=\(modifiers), inputMonitoring=\(Permissions.inputMonitoringGranted))")
+        AppLogger.log("global hotkey tap registered (key=\(option.rawValue), keyCode=\(option.keyCode), inputMonitoring=\(Permissions.inputMonitoringGranted))")
     }
 
     // A health check that keeps the tap alive. macOS disables a tap when the
@@ -124,7 +123,7 @@ final class GlobalHotkey {
         }
     }
 
-    /// Re-creates the tap using the last-registered keycode. Called when Input
+    /// Re-creates the tap using the last-registered key. Called when Input
     /// Monitoring is granted while the app is already running, because a tap
     /// created before the grant never starts receiving events, and after an
     /// input device change (e.g. AirPods), when a Bluetooth reconnect can leave
@@ -132,7 +131,7 @@ final class GlobalHotkey {
     /// unregister() first, so this is a clean, idempotent re-creation.
     func reactivate() {
         reactivationCount &+= 1
-        register(keyCode: activeKeyCode)
+        register(option: activeOption)
         let enabled = eventTap.map { CGEvent.tapIsEnabled(tap: $0) } ?? false
         AppLogger.log("hotkey tap re-created (#\(reactivationCount)), enabled=\(enabled)")
     }
@@ -171,18 +170,15 @@ private let eventTapCallback: CGEventTapCallBack = { proxy, type, event, userInf
     let hotkey = Unmanaged<GlobalHotkey>.fromOpaque(userInfo).takeUnretainedValue()
 
     let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-    // Log the Command key transitions so we can see real presses in the log.
-    if keycode == 54 || keycode == 55 {
-        let isDown = event.flags.contains(.maskCommand)
-        AppLogger.log("flagsChanged keycode=\(keycode) \(keycode == 54 ? "RIGHT" : "LEFT") \(isDown ? "DOWN" : "UP")")
-    }
+    let option = hotkey.activeOption
     // React only to the configured modifier key (distinguishes right from left).
-    guard UInt32(keycode) == hotkey.activeKeyCode else {
+    guard UInt32(keycode) == option.keyCode else {
         return Unmanaged.passUnretained(event)
     }
 
-    // Is the Command modifier currently held down?
-    let isDown = event.flags.contains(.maskCommand)
+    // Is the configured modifier currently held down?
+    let isDown = event.flags.contains(option.flag)
+    AppLogger.log("flagsChanged key=\(option.rawValue) \(isDown ? "DOWN" : "UP")")
     if isDown {
         hotkey.onStart?()
     } else {

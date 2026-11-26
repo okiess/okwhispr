@@ -50,6 +50,11 @@ final class AppState: ObservableObject {
     private var captureInProgress = false
 
     init() {
+        recorder.onLevel = { rms in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { AudioLevelMeter.shared.push(rms: rms) }
+            }
+        }
         refreshPermissions()
         lastInputMonitoring = Permissions.inputMonitoringGranted
         startPermissionWatcher()
