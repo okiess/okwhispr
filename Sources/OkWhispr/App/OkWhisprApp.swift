@@ -32,6 +32,7 @@ struct OkWhisprApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // Retained so the status item lives for the whole app lifetime.
     private var statusItemController: StatusItemController?
+    private var recordingOverlay: RecordingOverlayController?
 
     // A retained activity keeps the app resident even though AppKit re-enables
     // automatic termination during window restoration.
@@ -62,6 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create the menu-bar status item and keep it retained.
         statusItemController = StatusItemController(appState: appState)
+        recordingOverlay = RecordingOverlayController(appState: appState)
 
         // Request permissions FIRST so the system prompt shows and the tap is
         // created after the grant. A .listenOnly tap created before Input
@@ -75,14 +77,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Permissions.requestInputMonitoring()
         Permissions.requestAccessibility()
 
-        // Register the global hold-to-talk hotkey (right Command by default).
+        // Register the global hold-to-talk hotkey (right Command by default, or
+        // fn as chosen in Settings).
         GlobalHotkey.shared.onStart = { [weak self] in
             self?.appState.beginRecording()
         }
         GlobalHotkey.shared.onStop = { [weak self] in
             self?.appState.endRecording()
         }
-        GlobalHotkey.shared.register(keyCode: UInt32(kVK_RightCommand), modifiers: 0)
+        GlobalHotkey.shared.onCancel = { [weak self] in
+            self?.appState.cancelRecording()
+        }
+        GlobalHotkey.shared.register(option: SettingsStore.shared.hotkey)
 
         AppLogger.log("OkWhispr launched. engine=\(SettingsStore.shared.engine.displayName)")
     }

@@ -16,6 +16,7 @@ final class SettingsStore: ObservableObject {
         static let launchAtLogin = "sw.launchAtLogin"
         static let pasteAfter = "sw.pasteAfter"
         static let silenceGuardMs = "sw.silenceGuardMs"
+        static let showOverlay = "sw.showOverlay"
     }
 
     // Defaults are applied lazily so the store stays usable before first launch.
@@ -60,5 +61,12 @@ final class SettingsStore: ObservableObject {
     var silenceGuardMs: Int {
         get { defaults.object(forKey: Keys.silenceGuardMs) as? Int ?? 350 }
         set { defaults.set(newValue, forKey: Keys.silenceGuardMs); objectWillChange.send() }
+    }
+
+    /// When true, a floating animated pill is shown at the bottom center of the
+    /// screen while listening and transcribing.
+    var showOverlay: Bool {
+        get { defaults.object(forKey: Keys.showOverlay) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: Keys.showOverlay); objectWillChange.send() }
     }
 }

@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import CoreAudio
+import Accelerate
 
 /// Records the microphone through AVAudioEngine and collects mono Float32 PCM.
 ///
@@ -30,6 +31,10 @@ final class AudioRecorder: @unchecked Sendable {
     private var captureRate: Double = 16_000
 
     private(set) var isRecording = false
+
+    /// Called from the audio thread with the RMS of each captured buffer, for
+    /// the live level meter in the recording overlay. Set once before use.
+    var onLevel: (@Sendable (Float) -> Void)?
 
     private var deviceMonitor: AudioDeviceMonitor?
 
@@ -86,6 +91,11 @@ final class AudioRecorder: @unchecked Sendable {
             let frameCount = Int(avBuffer.frameLength)
             let mono = UnsafeBufferPointer(start: channelData[0], count: frameCount)
             let chunk = Array(mono)
+            if let onLevel = self.onLevel {
+                var rms: Float = 0
+                vDSP_rmsqv(channelData[0], 1, &rms, vDSP_Length(frameCount))
+                onLevel(rms)
+            }
             self.lock.lock()
             self.buffer.append(contentsOf: chunk)
             self.lock.unlock()

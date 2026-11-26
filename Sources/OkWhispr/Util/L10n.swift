@@ -61,16 +61,23 @@ enum L {
     // MARK: - Menu-bar tooltip
 
     static var tooltipReady: String {
-        de("OkWhispr: rechte ⌘ gedrückt halten zum Diktieren",
-           en: "OkWhispr: hold right ⌘ to dictate")
+        de("OkWhispr: \(hotkeyKey) gedrückt halten zum Diktieren",
+           en: "OkWhispr: hold \(hotkeyKey) to dictate")
     }
     static var tooltipPreparing: String {
         de("OkWhispr: lade Modell…",
            en: "OkWhispr: preparing model…")
     }
     static var tooltipListening: String {
-        de("Höre zu… rechte ⌘ loslassen zum Transkribieren",
-           en: "Listening… release right ⌘ to transcribe")
+        de("Höre zu… \(hotkeyKey) loslassen zum Transkribieren",
+           en: "Listening… release \(hotkeyKey) to transcribe")
+    }
+    /// The configured hold-to-talk key for tooltips ("rechte ⌘" / "fn").
+    private static var hotkeyKey: String {
+        switch SettingsStore.shared.hotkey {
+        case .rightCommand: return de("rechte ⌘", en: "right ⌘")
+        case .fn: return "fn"
+        }
     }
     static var tooltipTranscribing: String {
         de("Transkribiere…", en: "Transcribing…")
@@ -161,6 +168,13 @@ enum L {
         de("Wenn aktiviert, wird das Transkript am Cursor eingefügt. Wenn deaktiviert, wird es nur in die Zwischenablage kopiert.",
            en: "When on, the transcript is pasted where your cursor is. When off, it is only copied to your clipboard.")
     }
+    static var settingsOverlayToggle: String {
+        de("Aufnahme-Animation anzeigen", en: "Show recording animation")
+    }
+    static var settingsOverlayHelp: String {
+        de("Zeigt beim Sprechen und Transkribieren eine animierte Anzeige unten in der Bildschirmmitte.",
+           en: "Shows an animated indicator at the bottom center of the screen while speaking and transcribing.")
+    }
     static var settingsMinTalkTime: String {
         de("Mindestsprechzeit", en: "Minimum talk time")
     }
@@ -178,15 +192,16 @@ enum L {
     static var settingsShortcut: String {
         de("Tastenkürzel", en: "Shortcut")
     }
-    static var settingsHold: String {
-        de("Halte", en: "Hold")
+    static var settingsHotkeyPicker: String {
+        de("Diktieren mit", en: "Dictate with")
     }
-    static var settingsRight: String {
-        de("rechts", en: "right")
+    static var settingsHotkeyFnNote: String {
+        de("Tipp: Stelle in Systemeinstellungen > Tastatur „Globus-Taste drücken für“ auf „Keine Aktion“, damit macOS nicht zusätzlich Emojis oder die Apple-Diktierfunktion öffnet.",
+           en: "Tip: In System Settings > Keyboard, set \"Press Globe key to\" to \"Do Nothing\" so macOS does not also open emoji or Apple Dictation.")
     }
     static var settingsSpeakRelease: String {
-        de("und sprich, dann loslassen zum Transkribieren.",
-           en: "and speak, then release to transcribe.")
+        de("Taste halten und sprechen, dann loslassen zum Transkribieren.",
+           en: "Hold the key and speak, then release to transcribe.")
     }
 
     // MARK: - Settings: model
@@ -330,6 +345,9 @@ enum L {
         case .rightCommand:
             return de("Rechte ⌘ (Command) gedrückt halten",
                       en: "Hold right ⌘ (Command)")
+        case .fn:
+            return de("fn-Taste (Globus) gedrückt halten",
+                      en: "Hold fn (Globe key)")
         }
     }
 
