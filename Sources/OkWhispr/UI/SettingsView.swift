@@ -48,6 +48,9 @@ struct SettingsView: View {
             NotificationCenter.default.post(name: .didChangeSettings, object: nil)
         }
         .onChange(of: settings.hotkey) { _, newValue in
+            // The release of the old key would no longer match the new tap, so
+            // a capture in progress would never stop: cancel it first.
+            appState.cancelRecording()
             GlobalHotkey.shared.register(option: newValue)
         }
         .onChange(of: settings.language) { _, _ in

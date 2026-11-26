@@ -76,6 +76,8 @@ final class RecordingOverlayController {
         self.panel = panel
         let wasVisible = model.visible
         if !wasVisible {
+            // A quick re-show can cancel hide() before it reset the meter.
+            AudioLevelMeter.shared.reset()
             position(panel)
             panel.orderFrontRegardless()
         }
@@ -154,7 +156,7 @@ struct RecordingOverlayView: View {
     private static let maxHeight: CGFloat = 22
 
     var body: some View {
-        TimelineView(.animation) { context in
+        TimelineView(.animation(minimumInterval: nil, paused: !model.visible)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             ZStack {
                 Capsule()

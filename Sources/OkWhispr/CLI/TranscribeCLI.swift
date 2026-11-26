@@ -139,10 +139,11 @@ enum TranscribeCLI {
         var upFired = false
         GlobalHotkey.shared.onStart = { downFired = true; AppLogger.log("self-test: key DOWN received") }
         GlobalHotkey.shared.onStop = { upFired = true; AppLogger.log("self-test: key UP received") }
-        var option = HotkeyOption.rightCommand
-        if let index = arguments.firstIndex(of: "--key"), index + 1 < arguments.count,
-           let parsed = HotkeyOption(rawValue: arguments[index + 1]) {
-            option = parsed
+        let rawKey = value(arguments, after: "--key", default: HotkeyOption.rightCommand.rawValue)
+        guard let option = HotkeyOption(rawValue: rawKey) else {
+            let valid = HotkeyOption.allCases.map(\.rawValue).joined(separator: ", ")
+            FileHandle.standardError.write(Data("Unknown --key \"\(rawKey)\". Valid: \(valid)\n".utf8))
+            exit(2)
         }
         AppLogger.log("self-test key: \(option.rawValue)")
         GlobalHotkey.shared.register(option: option)

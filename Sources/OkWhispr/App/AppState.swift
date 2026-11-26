@@ -49,12 +49,14 @@ final class AppState: ObservableObject {
     /// Guards against a key-up that arrives before a key-down finished starting.
     private var captureInProgress = false
 
-    init() {
-        recorder.onLevel = { rms in
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated { AudioLevelMeter.shared.push(rms: rms) }
-            }
+    /// Feeds the overlay's level meter from the audio thread.
+    private static let levelHandler: @Sendable (Float) -> Void = { rms in
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated { AudioLevelMeter.shared.push(rms: rms) }
         }
+    }
+
+    init() {
         refreshPermissions()
         lastInputMonitoring = Permissions.inputMonitoringGranted
         startPermissionWatcher()
@@ -264,6 +266,9 @@ final class AppState: ObservableObject {
             return
         }
 
+        // Only meter the level when the overlay shows it. Set while the
+        // recorder is stopped, so the audio thread never sees it change.
+        recorder.onLevel = settings.showOverlay ? Self.levelHandler : nil
         do {
             try recorder.start()
         } catch {

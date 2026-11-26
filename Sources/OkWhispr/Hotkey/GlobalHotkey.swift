@@ -42,6 +42,15 @@ final class GlobalHotkey {
     var onStart: (() -> Void)?
     /// Called on the main thread when the key goes up.
     var onStop: (() -> Void)?
+    /// Called on the main thread when another key is pressed while the hotkey
+    /// is held (a shortcut such as fn+Left or right-Cmd+C, not a dictation).
+    /// The matching key-up then does not fire `onStop`.
+    var onCancel: (() -> Void)?
+
+    /// Whether the configured modifier is currently held down.
+    fileprivate var isHeld = false
+    /// Set when the current hold turned out to be part of a shortcut.
+    fileprivate var holdCancelled = false
 
     /// Counts tap re-creations so a device-change recovery is diagnosable in the log.
     private var reactivationCount = 0
@@ -54,10 +63,15 @@ final class GlobalHotkey {
         unregister()
 
         activeOption = option
+        isHeld = false
+        holdCancelled = false
         warnedMissingPermission = false
         lastReenableLog = .distantPast
 
+        // flagsChanged drives hold / release; keyDown detects a shortcut typed
+        // while the modifier is held, so it can cancel the capture.
         let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
+            | CGEventMask(1 << CGEventType.keyDown.rawValue)
         // userInfo points at this singleton so the C callback can reach it.
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
 
@@ -169,20 +183,51 @@ private let eventTapCallback: CGEventTapCallBack = { proxy, type, event, userInf
     }
     let hotkey = Unmanaged<GlobalHotkey>.fromOpaque(userInfo).takeUnretainedValue()
 
-    let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-    let option = hotkey.activeOption
-    // React only to the configured modifier key (distinguishes right from left).
-    guard UInt32(keycode) == option.keyCode else {
+    // Another key while the hotkey is held means a shortcut (fn+Left,
+    // right-Cmd+C, ...), not dictation: cancel the capture once.
+    if type == .keyDown {
+        if hotkey.isHeld && !hotkey.holdCancelled {
+            hotkey.holdCancelled = true
+            AppLogger.log("key pressed while \(hotkey.activeOption.rawValue) held; cancelling capture")
+            hotkey.onCancel?()
+        }
+        return Unmanaged.passUnretained(event)
+    }
+    guard type == .flagsChanged else {
         return Unmanaged.passUnretained(event)
     }
 
-    // Is the configured modifier currently held down?
-    let isDown = event.flags.contains(option.flag)
-    AppLogger.log("flagsChanged key=\(option.rawValue) \(isDown ? "DOWN" : "UP")")
+    let keycode = event.getIntegerValueField(.keyboardEventKeycode)
+    let option = hotkey.activeOption
+    let isDown: Bool
+    switch option {
+    case .rightCommand:
+        // The keycode distinguishes right from left Command.
+        guard UInt32(keycode) == option.keyCode else {
+            return Unmanaged.passUnretained(event)
+        }
+        isDown = event.flags.contains(option.flag)
+    case .fn:
+        // Match on the fn flag transition, not only keycode 63: the Globe key
+        // of some keyboards reports a different keycode. Other modifiers
+        // pressed while fn is held do not change the flag and are ignored.
+        isDown = event.flags.contains(option.flag)
+        guard isDown != hotkey.isHeld else {
+            return Unmanaged.passUnretained(event)
+        }
+    }
+
+    AppLogger.log("flagsChanged key=\(option.rawValue) keyCode=\(keycode) \(isDown ? "DOWN" : "UP")")
     if isDown {
+        hotkey.isHeld = true
+        hotkey.holdCancelled = false
         hotkey.onStart?()
     } else {
-        hotkey.onStop?()
+        hotkey.isHeld = false
+        if !hotkey.holdCancelled {
+            hotkey.onStop?()
+        }
+        hotkey.holdCancelled = false
     }
 
     // Pass the event on untouched so the modifier keeps working everywhere.

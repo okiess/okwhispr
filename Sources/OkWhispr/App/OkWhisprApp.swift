@@ -85,6 +85,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         GlobalHotkey.shared.onStop = { [weak self] in
             self?.appState.endRecording()
         }
+        GlobalHotkey.shared.onCancel = { [weak self] in
+            self?.appState.cancelRecording()
+        }
         GlobalHotkey.shared.register(option: SettingsStore.shared.hotkey)
 
         AppLogger.log("OkWhispr launched. engine=\(SettingsStore.shared.engine.displayName)")
